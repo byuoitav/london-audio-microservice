@@ -20,7 +20,7 @@ func HandleRawCommand(rawCommand RawDICommand) error {
 		return hexError
 	}
 
-	val, writeError := connection.Write(hexCommand)
+	_, writeError := connection.Write(hexCommand)
 	if writeError != nil {
 		fmt.Println(writeError.Error())
 	}
