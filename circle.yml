@@ -1,0 +1,25 @@
+machine:
+  services:
+    - docker
+
+test:
+  post:
+    - ./coverage.sh
+    - bash <(curl -s https://codecov.io/bash)
+
+deployment:
+  production:
+    branch: master
+    commands:
+      - go get -d -v
+      - env GOOS=linux GOARCH=arm go build -v .
+      - docker build -f Dockerfile-ARM -t byuoitav/rpi-london-audio-microservice:$CIRCLE_SHA1 .
+      - docker build -f Dockerfile-ARM -t byuoitav/rpi-london-audio-microservice:latest .
+      - docker build -t byuoitav/london-audio-microservice:$CIRCLE_SHA1 .
+      - docker build -t byuoitav/london-audio-microservice:latest .
+      - docker login -e $DOCKER_EMAIL -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+      - docker push byuoitav/london-audio-microservice:$CIRCLE_SHA1
+      - docker push byuoitav/london-audio-microservice:latest
+      - docker push byuoitav/rpi-london-audio-microservice:$CIRCLE_SHA1
+      - docker push byuoitav/rpi-london-audio-microservice:latest
+      - ./deploy.sh $CIRCLE_PROJECT_REPONAME $CIRCLE_SHA1
