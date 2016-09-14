@@ -1,0 +1,202 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "version": "0.1",
+        "title": "London Audio Microservice",
+        "description": "A RESTful API to interact with London Audio devices",
+        "license": {
+            "name": "Apache 2.0"
+        }
+    },
+    "host": "api.byu.edu:443",
+    "basePath": "/byuoitav-london-audio-microservice/0.1",
+    "schemes": [
+        "https"
+    ],
+    "produces": [
+        "application/json"
+    ],
+    "paths": {
+        "/health": {
+            "get": {
+                "summary": "Check Service Health",
+                "description": "Returns information about the microservice's health.",
+                "tags": [
+                    "Health"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "A health response",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Response"
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/responses/401"
+                    },
+                    "500": {
+                        "$ref": "#/responses/500"
+                    },
+                    "503": {
+                        "$ref": "#/responses/503"
+                    },
+                    "default": {
+                        "$ref": "#/responses/default"
+                    }
+                }
+            }
+        },
+        "/raw": {
+            "get": {
+                "summary": "Use Microservice",
+                "description": "Returns information about the /raw endpoint.",
+                "tags": [
+                    "FTP"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Endpoint information",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Response"
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/responses/401"
+                    },
+                    "500": {
+                        "$ref": "#/responses/500"
+                    },
+                    "503": {
+                        "$ref": "#/responses/503"
+                    },
+                    "default": {
+                        "$ref": "#/responses/default"
+                    }
+                }
+            },
+            "post": {
+                "summary": "Send a raw Direct Inject Message command",
+                "description": "Send a raw Direct Inject Message",
+                "parameters": [{
+                    "name": "body",
+                    "description": "Contains address of device, port, and command",
+                    "in": "body",
+                    "required": true,
+                    "schema": {
+                        "$ref": "#/definitions/RawRequest"
+                    }
+                }],
+                "tags": [
+                    "Raw"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Device response received"
+                    },
+                    "401": {
+                        "$ref": "#/responses/401"
+                    },
+                    "500": {
+                        "$ref": "#/responses/500"
+                    },
+                    "501": {
+                        "$ref": "#/responses/503"
+                    },
+                    "default": {
+                        "$ref": "#/responses/default"
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "HATEOAS": {
+            "type": "object",
+            "properties": {
+                "rel": {
+                    "type": "string",
+                    "description": "A human-readable name for what the link represents"
+                },
+                "href": {
+                    "type": "string",
+                    "description": "The link to the endpoint"
+                }
+            }
+        },
+        "Response": {
+            "type": "object",
+            "properties": {
+                "links": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/HATEOAS"
+                    }
+                },
+                "message": {
+                    "type": "string",
+                    "description": "A human-readable message about what just happened"
+                }
+            }
+        },
+        "Error": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "RawRequest": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string",
+                    "description": "Hostname or IP address of device"
+                },
+                "port": {
+                    "type": "string",
+                    "description": "Direct inject message port; typically 1023"
+                },
+                "command": {
+                    "type": "string",
+                    "description": "Direct inject message"
+                }
+            }
+        }
+    },
+    "responses": {
+        "200": {
+            "description": "Command accepted"
+        },
+		"401": {
+            "description": "You are not authorized to make that request",
+            "schema": {
+                "$ref": "#/definitions/Error"
+            }
+        },
+        "500": {
+            "description": "There was a problem with the server on our end",
+            "schema": {
+                "$ref": "#/definitions/Error"
+            }
+        },
+        "503": {
+            "description": "The server is overloaded, is under maintenance, or is otherwise unavailable",
+            "schema": {
+                "$ref": "#/definitions/Error"
+            }
+        },
+        "default": {
+            "description": "Unexpected error",
+            "schema": {
+                "$ref": "#/definitions/Error"
+            }
+        }
+    }
+}
