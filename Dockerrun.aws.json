@@ -5,7 +5,7 @@
         "Key": ".dockercfg"
     },
     "Image": {
-        "Name": "byuoitav/london-audio-microservice:<TAG>",
+        "Name": "byuoitav/london-audio-microservice:latest",
         "Update": "true"
     },
     "Ports": [{
