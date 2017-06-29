@@ -25,7 +25,11 @@ func main() {
 
 	secure.GET("/raw", handlers.RawInfo)
 
+	//functionality endpoints
 	secure.POST("/raw", handlers.Raw)
+	secure.GET("/:address/:input/volume/mute", handlers.Mute)
+	secure.GET("/:address/:input/volume/unmute", handlers.UnMute)
+	secure.GET("/:address/:input/volume/set/:level", handlers.SetVolume)
 
 	server := http.Server{
 		Addr:           port,
