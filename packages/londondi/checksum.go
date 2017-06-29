@@ -1,0 +1,3 @@
+package londondi
+
+func GetChecksumByte() {}

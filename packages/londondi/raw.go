@@ -28,3 +28,7 @@ func HandleRawCommand(rawCommand RawDICommand) error {
 	connection.Close()
 	return connectError
 }
+
+func HandleRawCommands(rawCommands []RawDICommand) error {
+	return nil
+}
