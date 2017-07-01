@@ -9,17 +9,20 @@ import (
 
 func Mute(context echo.Context) error {
 
-	commands, err := GenerateMuteCommands(context.Param("input"), context.Param("address"))
+	input := context.Param("input")
+	address := context.Param("address")
+
+	command, err := londondi.BuildRawMuteCommand(input, address)
 	if err != nil {
 		return context.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	err = londondi.HandleRawCommands(commands)
+	err = londondi.HandleRawCommand(command)
 	if err != nil {
 		return context.JSON(http.StatusInternalServerError, err.Error())
 	}
 
-	return context.JSON(http.StatusOK, "success")
+	return context.JSON(http.StatusOK, "Success")
 }
 
 func UnMute(context echo.Context) error {
