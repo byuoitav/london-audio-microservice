@@ -2,7 +2,9 @@ package londondi
 
 import (
 	"encoding/hex"
+	"fmt"
 	"log"
+	"strconv"
 )
 
 /* to set a state variable, <DI_SETSV>
@@ -125,12 +127,23 @@ func BuildRawVolumeCommand(input string, address string, volume string) (RawDICo
 
 	object, _ := hex.DecodeString(gainBlocks[input])
 	command = append(command, object...)
+	log.Printf("Command string: %s", hex.EncodeToString(command))
 
-	stateVariable, _ := hex.DecodeString(stateVariables["mute"])
-	command = append(command, stateVariable...)
+	state, _ := hex.DecodeString(stateVariables["gain"])
+	command = append(command, state...)
+	log.Printf("Command string: %s", hex.EncodeToString(command))
 
-	data, _ := hex.DecodeString(muteStates["false"])
-	command = append(command, data...)
+	log.Printf("Calculating parameter for volume %s", volume)
+	dBValue, _ := strconv.Atoi(volume)
+	log.Printf("dBValue: %v", dBValue)
+
+	intValueToSend := dBValue * 10000
+	log.Printf("intValueToSend: %v", intValueToSend)
+
+	hexValueToSend := fmt.Sprintf("%x", intValueToSend)
+	log.Printf("hexValueToSend: %v", hexValueToSend)
+	command = append(command, hexValueToSend...)
+	log.Printf("Command string: %s", hex.EncodeToString(command))
 
 	checksum := GetChecksumByte(command)
 
