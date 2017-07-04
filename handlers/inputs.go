@@ -12,7 +12,7 @@ func Mute(context echo.Context) error {
 	input := context.Param("input")
 	address := context.Param("address")
 
-	command, err := londondi.BuildRawMuteCommand(input, address)
+	command, err := londondi.BuildRawMuteCommand(input, address, "true")
 	if err != nil {
 		return context.JSON(http.StatusBadRequest, err.Error())
 	}
@@ -30,7 +30,7 @@ func UnMute(context echo.Context) error {
 	input := context.Param("input")
 	address := context.Param("address")
 
-	command, err := londondi.BuildRawUnMuteCommand(input, address)
+	command, err := londondi.BuildRawMuteCommand(input, address, "false")
 	if err != nil {
 		return context.JSON(http.StatusBadRequest, err.Error())
 	}
