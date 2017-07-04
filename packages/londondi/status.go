@@ -77,12 +77,10 @@ func BuildSubscribeCommand(address, input, state string, messageType int32) (Raw
 	command = append(command, NODE...)
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
-	object, _ := hex.DecodeString(gainBlocks[input])
-	command = append(command, object...)
+	command = append(command, gainBlocks[input]...)
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
-	stateVariable, _ := hex.DecodeString(stateVariables[state])
-	command = append(command, stateVariable...)
+	command = append(command, stateVariables[state]...)
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
 	command = append(command, RATE...)
@@ -95,8 +93,8 @@ func BuildSubscribeCommand(address, input, state string, messageType int32) (Raw
 	command, _ = MakeSubstitutions(command, reserved)
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
-	STX := []byte{byte(reserved["STX"])}
-	command = append(STX, command...)
+	stx := []byte{STX}
+	command = append(stx, command...)
 	ETX := byte(reserved["ETX"])
 	command = append(command, ETX)
 	log.Printf("Command string: %s", hex.EncodeToString(command))

@@ -26,14 +26,11 @@ func BuildRawMuteCommand(input, address, status string) (RawDICommand, error) {
 	command = append(command, NODE...)
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
-	object, _ := hex.DecodeString(gainBlocks[input])
-	command = append(command, object...)
+	command = append(command, gainBlocks[input]...)
 
-	stateVariable, _ := hex.DecodeString(stateVariables["mute"])
-	command = append(command, stateVariable...)
+	command = append(command, stateVariables["mute"]...)
 
-	data, _ := hex.DecodeString(muteStates[status])
-	command = append(command, data...)
+	command = append(command, muteStates[status]...)
 
 	checksum := GetChecksumByte(command)
 
@@ -70,12 +67,10 @@ func BuildRawVolumeCommand(input string, address string, volume string) (RawDICo
 	command = append(command, NODE...)
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
-	object, _ := hex.DecodeString(gainBlocks[input])
-	command = append(command, object...)
+	command = append(command, gainBlocks[input]...)
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
-	state, _ := hex.DecodeString(stateVariables["gain"])
-	command = append(command, state...)
+	command = append(command, stateVariables["gain"]...)
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
 	log.Printf("Calculating parameter for volume %s", volume)

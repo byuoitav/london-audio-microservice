@@ -11,28 +11,28 @@ type RawDIResponse struct {
 }
 
 //standardize file based on these values
-var gainBlocks = map[string]string{
+var gainBlocks = map[string][]byte{
 
-	"mic1":   "00010a",
-	"mic2":   "00010b",
-	"mic3":   "00010c",
-	"mic4":   "00010d",
-	"media1": "00010e",
-	"media2": "00010f",
+	"mic1":   {0x00, 0x01, 0x0a},
+	"mic2":   {0x00, 0x01, 0x0b},
+	"mic3":   {0x00, 0x01, 0x0c},
+	"mic4":   {0x00, 0x01, 0x0d},
+	"media1": {0x00, 0x01, 0x0e},
+	"media2": {0x00, 0x01, 0x0f},
 }
 
 //standards in London documentation
-var stateVariables = map[string]string{
+var stateVariables = map[string][]byte{
 
-	"gain":     "0000",
-	"mute":     "0001",
-	"polarity": "0002",
+	"gain":     {0x00, 0x00},
+	"mute":     {0x00, 0x01},
+	"polarity": {0x00, 0x02},
 }
 
-var muteStates = map[string]string{
+var muteStates = map[string][]byte{
 
-	"true":  "00000001",
-	"false": "00000000",
+	"true":  {0x00, 0x00, 0x00, 0x01},
+	"false": {0x00, 0x00, 0x00, 0x00},
 }
 
 var PORT = "1023"
