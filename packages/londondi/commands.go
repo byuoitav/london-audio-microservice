@@ -26,26 +26,29 @@ func BuildRawMuteCommand(input, address, status string) (RawDICommand, error) {
 	command = append(command, NODE...)
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
-	command = append(command, gainBlocks[input]...)
+	gainBlock, err := hex.DecodeString(input)
+	if err != nil {
+		errorMessage := "Could not decode input string: " + err.Error()
+		log.Printf(errorMessage)
+		return RawDICommand{}, errors.New(errorMessage)
+	}
 
+	command = append(command, gainBlock...)
 	command = append(command, stateVariables["mute"]...)
-
 	command = append(command, muteStates[status]...)
 
 	checksum := GetChecksumByte(command)
-
 	command = append(command, checksum)
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
 	command, _ = MakeSubstitutions(command, reserved)
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
-	STX := []byte{byte(reserved["STX"])}
-	command = append(STX, command...)
+	stx := []byte{STX}
+	command = append(stx, command...)
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
-	ETX := []byte{byte(reserved["ETX"])}
-	command = append(command, ETX...)
+	command = append(command, ETX)
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
 	//since we're building a mute command, we a mute state variable for the specific port
@@ -67,7 +70,14 @@ func BuildRawVolumeCommand(input string, address string, volume string) (RawDICo
 	command = append(command, NODE...)
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
-	command = append(command, gainBlocks[input]...)
+	gainBlock, err := hex.DecodeString(input)
+	if err != nil {
+		errorMessage := "Could not decode input string: " + err.Error()
+		log.Printf(errorMessage)
+		return RawDICommand{}, errors.New(errorMessage)
+	}
+
+	command = append(command, gainBlock...)
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
 	command = append(command, stateVariables["gain"]...)

@@ -77,7 +77,14 @@ func BuildSubscribeCommand(address, input, state string, messageType int32) (Raw
 	command = append(command, NODE...)
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
-	command = append(command, gainBlocks[input]...)
+	gainBlock, err := hex.DecodeString(input)
+	if err != nil {
+		errorMessage := "Could not decode input string: " + err.Error()
+		log.Printf(errorMessage)
+		return RawDICommand{}, errors.New(errorMessage)
+	}
+
+	command = append(command, gainBlock...)
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
 	command = append(command, stateVariables[state]...)
