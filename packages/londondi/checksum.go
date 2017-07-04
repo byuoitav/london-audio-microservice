@@ -5,18 +5,17 @@ import (
 	"log"
 )
 
-func GetChecksumByte(command []byte) byte {
+func GetChecksumByte(message []byte) byte {
 
-	log.Printf("Generating checksum byte...")
-	log.Printf("command %v", command)
-	log.Printf("message length: %v", len(command))
+	log.Printf("Generating checksum byte for message %x...", message)
 
-	checksum := command[0] ^ command[1]
+	checksum := message[0] ^ message[1]
 
-	for i := 2; i < len(command); i++ {
-		checksum = checksum ^ command[i]
+	for i := 2; i < len(message); i++ {
+		checksum = checksum ^ message[i]
 	}
 
+	log.Printf("checksum: %x", checksum)
 	return checksum
 }
 
@@ -30,6 +29,7 @@ func MakeSubstitutions(command []byte, toCheck map[string]int) ([]byte, error) {
 
 	log.Printf("replacing %x with %x", escapeInt, substitutions[escapeInt])
 	newCommand := bytes.Replace(command, []byte{escapeByte}, substitutions[escapeInt], -1)
+	log.Printf("changed command: %x", newCommand)
 
 	for key, value := range toCheck {
 
