@@ -25,7 +25,7 @@ func HandleRawCommand(rawCommand RawDICommand) error {
 		return hexError
 	}
 
-	log.Printf("hexCommand: %v", hexCommand)
+	log.Printf("hexCommand: %X", hexCommand)
 
 	_, writeError := connection.Write(hexCommand)
 	if writeError != nil {

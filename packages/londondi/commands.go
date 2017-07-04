@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"log"
-	"math"
 	"strconv"
 )
 
@@ -65,7 +64,7 @@ func BuildRawVolumeCommand(input string, address string, volume string) (RawDICo
 
 	log.Printf("Building raw volume command for input: %s on address: %s", input, address)
 
-	command := []byte{byte(DI_SETSV)}
+	command := []byte{byte(DI_SETSVPERCENT)}
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
 	command = append(command, NODE...)
@@ -80,20 +79,16 @@ func BuildRawVolumeCommand(input string, address string, volume string) (RawDICo
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
 	log.Printf("Calculating parameter for volume %s", volume)
-	dBValue, _ := strconv.Atoi(volume)
-	log.Printf("dBValue: %v", dBValue)
-
-	var paramValue int32
-	if dBValue <= 10 && dBValue >= -10 {
-		paramValue = int32(dBValue * 10000)
-	} else if dBValue < -10 {
-		paramValue = int32((-1 * math.Log10(math.Abs(float64(dBValue/10))) * 200000) - 100000)
-	} else {
-		return RawDICommand{}, errors.New("Bad dB value")
+	toSend, _ := strconv.Atoi(volume)
+	if toSend > 100 || toSend < 0 {
+		return RawDICommand{}, errors.New("Invalid volume request")
 	}
 
+	toSend *= 65536
+	log.Printf("toSend: %v", toSend)
+
 	hexValue := make([]byte, 4)
-	binary.BigEndian.PutUint32(hexValue, uint32(paramValue))
+	binary.BigEndian.PutUint32(hexValue, uint32(toSend))
 
 	command = append(command, hexValue...)
 	log.Printf("Command string: %s", hex.EncodeToString(command))
