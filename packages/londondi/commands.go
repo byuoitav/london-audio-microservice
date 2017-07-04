@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"log"
-	"math"
 	"strconv"
 )
 
@@ -24,36 +23,32 @@ func BuildRawMuteCommand(input, address, status string) (RawDICommand, error) {
 	command := []byte{byte(DI_SETSV)}
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
-	stupid := append([]byte{byte(0x00)}, byte(NODE))
-	command = append(command, stupid...)
+	command = append(command, NODE...)
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
-	command = append(command, []byte{byte(VIRTUAL_DEVICE)}...)
-	log.Printf("Command string: %s", hex.EncodeToString(command))
+	gainBlock, err := hex.DecodeString(input)
+	if err != nil {
+		errorMessage := "Could not decode input string: " + err.Error()
+		log.Printf(errorMessage)
+		return RawDICommand{}, errors.New(errorMessage)
+	}
 
-	object, _ := hex.DecodeString(gainBlocks[input])
-	command = append(command, object...)
-
-	stateVariable, _ := hex.DecodeString(stateVariables["mute"])
-	command = append(command, stateVariable...)
-
-	data, _ := hex.DecodeString(muteStates[status])
-	command = append(command, data...)
+	command = append(command, gainBlock...)
+	command = append(command, stateVariables["mute"]...)
+	command = append(command, muteStates[status]...)
 
 	checksum := GetChecksumByte(command)
-
 	command = append(command, checksum)
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
-	command, _ = MakeSubstitutions(command)
+	command, _ = MakeSubstitutions(command, reserved)
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
-	STX := []byte{byte(reserved["STX"])}
-	command = append(STX, command...)
+	stx := []byte{STX}
+	command = append(stx, command...)
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
-	ETX := []byte{byte(reserved["ETX"])}
-	command = append(command, ETX...)
+	command = append(command, ETX)
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
 	//since we're building a mute command, we a mute state variable for the specific port
@@ -69,39 +64,36 @@ func BuildRawVolumeCommand(input string, address string, volume string) (RawDICo
 
 	log.Printf("Building raw volume command for input: %s on address: %s", input, address)
 
-	command := []byte{byte(DI_SETSV)}
+	command := []byte{byte(DI_SETSVPERCENT)}
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
-	stupid := append([]byte{byte(0x00)}, byte(NODE))
-	command = append(command, stupid...)
+	command = append(command, NODE...)
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
-	command = append(command, []byte{byte(VIRTUAL_DEVICE)}...)
+	gainBlock, err := hex.DecodeString(input)
+	if err != nil {
+		errorMessage := "Could not decode input string: " + err.Error()
+		log.Printf(errorMessage)
+		return RawDICommand{}, errors.New(errorMessage)
+	}
+
+	command = append(command, gainBlock...)
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
-	object, _ := hex.DecodeString(gainBlocks[input])
-	command = append(command, object...)
-	log.Printf("Command string: %s", hex.EncodeToString(command))
-
-	state, _ := hex.DecodeString(stateVariables["gain"])
-	command = append(command, state...)
+	command = append(command, stateVariables["gain"]...)
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
 	log.Printf("Calculating parameter for volume %s", volume)
-	dBValue, _ := strconv.Atoi(volume)
-	log.Printf("dBValue: %v", dBValue)
-
-	var paramValue int32
-	if dBValue <= 10 && dBValue >= -10 {
-		paramValue = int32(dBValue * 10000)
-	} else if dBValue < -10 {
-		paramValue = int32((-1 * math.Log10(math.Abs(float64(dBValue/10))) * 200000) - 100000)
-	} else {
-		return RawDICommand{}, errors.New("Bad dB value")
+	toSend, _ := strconv.Atoi(volume)
+	if toSend > 100 || toSend < 0 {
+		return RawDICommand{}, errors.New("Invalid volume request")
 	}
 
+	toSend *= 65536
+	log.Printf("toSend: %v", toSend)
+
 	hexValue := make([]byte, 4)
-	binary.BigEndian.PutUint32(hexValue, uint32(paramValue))
+	binary.BigEndian.PutUint32(hexValue, uint32(toSend))
 
 	command = append(command, hexValue...)
 	log.Printf("Command string: %s", hex.EncodeToString(command))
@@ -111,7 +103,7 @@ func BuildRawVolumeCommand(input string, address string, volume string) (RawDICo
 	command = append(command, checksum)
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
-	command, _ = MakeSubstitutions(command)
+	command, _ = MakeSubstitutions(command, reserved)
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
 	STX := []byte{byte(reserved["STX"])}
