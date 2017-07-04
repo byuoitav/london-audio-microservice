@@ -39,9 +39,18 @@ var PORT = "1023"
 
 const DI_SETSV = 0x88
 const DI_SETSVPERCENT = 0x8d
+const DI_SUBSCRIBESV = 0x89
+const DI_SUBSCRIBESVPERCENT = 0x8e
+const DI_UNSUBSCRIBESV = 0x8a
+const DI_UNSUBSCRIBESVPERCENT = 0x8f
 
-const NODE = 0x0001
-const VIRTUAL_DEVICE = 0x03
+//2 bytes for NODE, 1 byte for VIRTUAL_DEVICE should be the same for all cases!
+var NODE = []byte{0x00, 0x01, 0x03}
+
+var RATE = []byte{0x00, 0x00, 0x00, 0x32} //represents 50 ms, the shortest interval
+
+var ACK = byte(0x06)
+var ETX = byte(0x03)
 
 var reserved = map[string]int{
 	"STX":    0x02,

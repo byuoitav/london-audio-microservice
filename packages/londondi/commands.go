@@ -24,11 +24,7 @@ func BuildRawMuteCommand(input, address, status string) (RawDICommand, error) {
 	command := []byte{byte(DI_SETSV)}
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
-	stupid := append([]byte{byte(0x00)}, byte(NODE))
-	command = append(command, stupid...)
-	log.Printf("Command string: %s", hex.EncodeToString(command))
-
-	command = append(command, []byte{byte(VIRTUAL_DEVICE)}...)
+	command = append(command, NODE...)
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
 	object, _ := hex.DecodeString(gainBlocks[input])
@@ -72,11 +68,7 @@ func BuildRawVolumeCommand(input string, address string, volume string) (RawDICo
 	command := []byte{byte(DI_SETSV)}
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
-	stupid := append([]byte{byte(0x00)}, byte(NODE))
-	command = append(command, stupid...)
-	log.Printf("Command string: %s", hex.EncodeToString(command))
-
-	command = append(command, []byte{byte(VIRTUAL_DEVICE)}...)
+	command = append(command, NODE...)
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
 	object, _ := hex.DecodeString(gainBlocks[input])
