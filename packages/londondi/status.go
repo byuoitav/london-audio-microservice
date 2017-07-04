@@ -2,6 +2,7 @@ package londondi
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/hex"
 	"errors"
 	"log"
@@ -64,7 +65,6 @@ func GetMute(address, input string) (status.MuteStatus, error) {
 
 }
 
-//@param subscribe - TRUE indicates subscribe, FALSE indicates unsubscribe
 func BuildSubscribeCommand(address, input, state string, messageType int32) (RawDICommand, error) {
 
 	log.Printf("Building raw command to subsribe to %s of input %s on address %s", state, input, address)
@@ -91,7 +91,7 @@ func BuildSubscribeCommand(address, input, state string, messageType int32) (Raw
 	command = append(command, checksum)
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
-	command, _ = MakeSubstitutions(command)
+	command, _ = MakeSubstitutions(command, reserved)
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
 	STX := []byte{byte(reserved["STX"])}
@@ -135,9 +135,6 @@ func HandleStatusCommand(subscribe RawDICommand) ([]byte, error) {
 		return []byte{}, errors.New(errorMessage)
 	}
 
-	//	var reader bufio.Reader
-	//	response, _ reader.ReadBytes(ACK)
-
 	reader := bufio.NewReader(connection)
 
 	response, err := reader.ReadBytes(ETX)
@@ -160,5 +157,49 @@ func ParseVolumeStatus(message []byte) (status.Volume, error) {
 
 func ParseMuteStatus(message []byte) (status.MuteStatus, error) {
 
+	log.Printf("Parsing message: %X", message)
+	decoded, err := RemoveEscapeCharacters(message)
+	if err != nil {
+		errorMessage := "Could not remove escape characters: " + err.Error()
+		log.Printf(errorMessage)
+		return status.MuteStatus{}, errors.New(errorMessage)
+	}
+
+	log.Printf("Without escape characters: %X", decoded)
+
+	buffer := bytes.NewBuffer(decoded)
+	stx, err := buffer.ReadByte()
+	if err != nil {
+		errorMessage := "Could not read byte: " + err.Error()
+		log.Printf(errorMessage)
+		return status.MuteStatus{}, errors.New(errorMessage)
+	}
+
+	if stx != STX {
+		errorMessage := "Status does not start with STX byte."
+		log.Printf("Error: %s", errorMessage)
+		return status.MuteStatus{}, errors.New(errorMessage)
+	}
+
+	messageType, err := buffer.ReadByte()
+	if err != nil {
+		errorMessage := "Could not read message type byte"
+		log.Printf("Error: %s", errorMessage)
+		return status.MuteStatus{}, errors.New(errorMessage)
+	}
+
+	if messageType != DI_SETSV {
+		errorMessage := "Status does not start with STX byte."
+		log.Printf("Error: %s", errorMessage)
+		return status.MuteStatus{}, errors.New(errorMessage)
+	}
+
 	return status.MuteStatus{}, nil
+}
+
+func RemoveEscapeCharacters(message []byte) ([]byte, error) {
+
+	log.Printf("Removing escape characters...")
+
+	return []byte{}, nil
 }

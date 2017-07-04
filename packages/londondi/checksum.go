@@ -2,7 +2,6 @@ package londondi
 
 import (
 	"bytes"
-	"encoding/hex"
 	"log"
 )
 
@@ -21,46 +20,28 @@ func GetChecksumByte(command []byte) byte {
 	return checksum
 }
 
-func MakeSubstitutions(command []byte) ([]byte, error) {
+func MakeSubstitutions(command []byte, toCheck map[string]int) ([]byte, error) {
 
 	log.Printf("Making substitutions...")
 
-	newCommand, err := FindAndReplace(command, 0x1b)
-	if err != nil {
-		return []byte{}, err
-	}
+	//always address escape byte first
+	escapeInt := toCheck["escape"]
+	escapeByte := byte(escapeInt)
 
-	command = newCommand
+	log.Printf("replacing %x with %x", escapeInt, substitutions[escapeInt])
+	newCommand := bytes.Replace(command, []byte{escapeByte}, substitutions[escapeInt], -1)
 
-	for key, value := range reserved {
+	for key, value := range toCheck {
 
-		if key == "Escape" {
+		if key == "escape" {
 			continue
 		}
 
-		newCommand, err := FindAndReplace(command, value)
-		if err != nil {
-			return []byte{}, err
-		}
+		log.Printf("replacing %x with %x", value, substitutions[value])
+		newCommand = bytes.Replace(newCommand, []byte{byte(value)}, substitutions[value], -1)
+		log.Printf("changed command: %x", newCommand)
 
-		command = newCommand
 	}
 
-	return command, nil
-}
-
-func FindAndReplace(command []byte, reserved int) ([]byte, error) {
-
-	fragments := bytes.Split(command, []byte{byte(reserved)})
-	if len(fragments) > 1 {
-
-		newBytes, err := hex.DecodeString(substitutions[reserved])
-		if err != nil {
-			return []byte{}, err
-		}
-
-		return bytes.Join(fragments, newBytes), nil
-	}
-
-	return command, nil
+	return newCommand, nil
 }
