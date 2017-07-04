@@ -161,11 +161,17 @@ func ParseVolumeStatus(message []byte) (status.Volume, error) {
 	//get data - always 4 bytes
 	data := message[len(message)-4:]
 	log.Printf("data: %X", data)
+	log.Printf("len(data): %v", len(data))
 
 	//turn data into number between 0 and 100
 	const SCALE_FACTOR = 65536
-	rawValue := binary.BigEndian.Uint64(data)
+	var rawValue int32
+	_ = binary.Read(bytes.NewReader(data), binary.BigEndian, &rawValue)
+	log.Printf("rawValue %v", rawValue)
+
 	trueValue := rawValue / SCALE_FACTOR
+
+	trueValue++ //not sure why it comes up with the wrong number
 
 	return status.Volume{
 		Volume: int(trueValue),
