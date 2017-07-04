@@ -1,9 +1,11 @@
 package londondi
 
 import (
+	"encoding/binary"
 	"encoding/hex"
-	"fmt"
+	"errors"
 	"log"
+	"math"
 	"strconv"
 )
 
@@ -137,12 +139,19 @@ func BuildRawVolumeCommand(input string, address string, volume string) (RawDICo
 	dBValue, _ := strconv.Atoi(volume)
 	log.Printf("dBValue: %v", dBValue)
 
-	intValueToSend := dBValue * 10000
-	log.Printf("intValueToSend: %v", intValueToSend)
+	var paramValue int32
+	if dBValue <= 10 && dBValue >= -10 {
+		paramValue = int32(dBValue * 10000)
+	} else if dBValue < -10 {
+		paramValue = int32((-1 * math.Log10(math.Abs(float64(dBValue/10))) * 200000) - 100000)
+	} else {
+		return RawDICommand{}, errors.New("Bad dB value")
+	}
 
-	hexValueToSend := fmt.Sprintf("%x", intValueToSend)
-	log.Printf("hexValueToSend: %v", hexValueToSend)
-	command = append(command, hexValueToSend...)
+	hexValue := make([]byte, 4)
+	binary.BigEndian.PutUint32(hexValue, uint32(paramValue))
+
+	command = append(command, hexValue...)
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
 	checksum := GetChecksumByte(command)
