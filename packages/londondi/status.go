@@ -3,6 +3,7 @@ package londondi
 import (
 	"bufio"
 	"bytes"
+	"encoding/binary"
 	"encoding/hex"
 	"errors"
 	"log"
@@ -157,7 +158,18 @@ func ParseVolumeStatus(message []byte) (status.Volume, error) {
 		return status.Volume{}, err
 	}
 
-	return status.Volume{}, nil
+	//get data - always 4 bytes
+	data := message[len(message)-4:]
+	log.Printf("data: %X", data)
+
+	//turn data into number between 0 and 100
+	const SCALE_FACTOR = 65536
+	rawValue := binary.BigEndian.Uint64(data)
+	trueValue := rawValue / SCALE_FACTOR
+
+	return status.Volume{
+		Volume: int(trueValue),
+	}, nil
 }
 
 func ParseMuteStatus(message []byte) (status.MuteStatus, error) {
