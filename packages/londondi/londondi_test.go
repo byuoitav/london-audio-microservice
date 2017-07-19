@@ -1,6 +1,9 @@
 package londondi
 
-import "testing"
+import (
+	"bytes"
+	"testing"
+)
 
 //decoding cases
 var CASE_0 = []byte{0x8d, 0x00, 0x01, 0x00, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x8c}
@@ -22,13 +25,13 @@ func TestChecksum(t *testing.T) {
 func TestSubstitutions(t *testing.T) {
 
 	//test decoding a slice where there are no subsitutions necessary when decoding, e.g. no instances of escape byte
-	result, err := MakeSubsitutions(CASE_0, DECODE)
+	result, err := MakeSubstitutions(CASE_0, DECODE)
 	if err != nil {
 		t.Error(err)
 		t.Fail()
 	}
 
-	if result != RESULT_0 {
+	if !bytes.Equal(result, RESULT_0) {
 		t.Error("Error on case 0: decode a slice with no necessary substitutions")
 	}
 
@@ -39,7 +42,7 @@ func TestSubstitutions(t *testing.T) {
 		t.Fail()
 	}
 
-	if result != RESULT_1 {
+	if !bytes.Equal(result, RESULT_1) {
 		t.Error("Error on case 1: expected two substitutions")
 	}
 
@@ -50,18 +53,18 @@ func TestSubstitutions(t *testing.T) {
 		t.Fail()
 	}
 
-	if result != RESULT_2 {
+	if !bytes.Equal(result, RESULT_2) {
 		t.Error("Error on case 2: unescaped substitution (expected no substitutions)")
 	}
 
 	//the kitchen sink
-	result, err = MakeSubstituions(CASE_3, DECODE)
+	result, err = MakeSubstitutions(CASE_3, DECODE)
 	if err != nil {
 		t.Error(err)
 		t.Fail()
 	}
 
-	if result != RESULT_3 {
+	if !bytes.Equal(result, RESULT_3) {
 		t.Error("Houston, we have a problem")
 	}
 
