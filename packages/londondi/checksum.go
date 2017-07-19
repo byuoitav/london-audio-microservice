@@ -25,10 +25,17 @@ func MakeSubstitutions(command []byte, toCheck map[string]int) ([]byte, error) {
 
 	//always address escape byte first
 	escapeInt := toCheck["escape"]
-	escapeByte := byte(escapeInt)
+	var toReplace []byte
+	toReplace = append(toReplace, byte(escapeInt))
 
-	log.Printf("replacing %x with %x", escapeInt, substitutions[escapeInt])
-	newCommand := bytes.Replace(command, []byte{escapeByte}, substitutions[escapeInt], -1)
+	if len(substitutions[escapeInt]) == 1 {
+		//get the second bit
+		newEscapeInt := escapeInt >> 8
+		toReplace = append([]byte{byte(newEscapeInt)}, toReplace...)
+	}
+
+	log.Printf("replacing %x with %x", toReplace, substitutions[escapeInt])
+	newCommand := bytes.Replace(command, toReplace, substitutions[escapeInt], -1)
 	log.Printf("changed command: %x", newCommand)
 
 	for key, value := range toCheck {
@@ -37,8 +44,16 @@ func MakeSubstitutions(command []byte, toCheck map[string]int) ([]byte, error) {
 			continue
 		}
 
+		var iHateYou []byte
+		iHateYou = append(iHateYou, byte(value))
+
+		if len(substitutions[value]) == 1 {
+			//get the second bit
+			newEscapeInt := value >> 8
+			iHateYou = append([]byte{byte(newEscapeInt)}, iHateYou...)
+		}
 		log.Printf("replacing %x with %x", value, substitutions[value])
-		newCommand = bytes.Replace(newCommand, []byte{byte(value)}, substitutions[value], -1)
+		newCommand = bytes.Replace(newCommand, iHateYou, substitutions[value], -1)
 		log.Printf("changed command: %x", newCommand)
 
 	}
