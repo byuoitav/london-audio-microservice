@@ -97,12 +97,12 @@ func BuildSubscribeCommand(address, input, state string, messageType int32) (Raw
 	command = append(command, checksum)
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
-	command, _ = MakeSubstitutions(command, reserved)
+	command, _ = MakeSubstitutions(command, ENCODE)
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
 	stx := []byte{STX}
 	command = append(stx, command...)
-	ETX := byte(reserved["ETX"])
+	ETX := byte(ENCODE["ETX"])
 	command = append(command, ETX)
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
