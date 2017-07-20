@@ -53,7 +53,7 @@ var ACK = byte(0x06)
 var ETX = byte(0x03)
 var STX = byte(0x02)
 
-var reserved = map[string]int{
+var ENCODE = map[string]int{
 	"STX":    0x02,
 	"ETX":    0x03,
 	"ACK":    0x06,
