@@ -41,7 +41,7 @@ func BuildRawMuteCommand(input, address, status string) (RawDICommand, error) {
 	command = append(command, checksum)
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
-	command, _ = MakeSubstitutions(command, reserved)
+	command, _ = MakeSubstitutions(command, ENCODE)
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
 	stx := []byte{STX}
@@ -103,14 +103,14 @@ func BuildRawVolumeCommand(input string, address string, volume string) (RawDICo
 	command = append(command, checksum)
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
-	command, _ = MakeSubstitutions(command, reserved)
+	command, _ = MakeSubstitutions(command, ENCODE)
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
-	STX := []byte{byte(reserved["STX"])}
+	STX := []byte{byte(ENCODE["STX"])}
 	command = append(STX, command...)
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
-	ETX := []byte{byte(reserved["ETX"])}
+	ETX := []byte{byte(ENCODE["ETX"])}
 	command = append(command, ETX...)
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
