@@ -35,7 +35,6 @@ func MakeSubstitutions(command []byte, toCheck map[string]int) ([]byte, error) {
 	}
 
 	newCommand := bytes.Replace(command, toReplace, substitutions[escapeInt], -1)
-	log.Printf("changed command: %x", newCommand)
 
 	for key, value := range toCheck {
 
