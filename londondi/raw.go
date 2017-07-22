@@ -41,6 +41,7 @@ func HandleRawCommandBytes(command []byte, address string) error {
 
 	log.Printf("Handling raw command: %x...", command)
 
+	log.Printf("Connecting to device...")
 	connection, err := net.Dial("tcp", address)
 	if err != nil {
 		errorMessage := "Could not connect to device: " + err.Error()
@@ -48,6 +49,7 @@ func HandleRawCommandBytes(command []byte, address string) error {
 		return errors.New(errorMessage)
 	}
 
+	log.Printf("Sending command to device...")
 	_, err = connection.Write(command)
 	if err != nil {
 		errorMessage := "Could not write to device: " + err.Error()

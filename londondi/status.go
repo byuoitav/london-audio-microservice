@@ -75,8 +75,8 @@ func BuildSubscribeCommand(address, input, state string, messageType byte) ([]by
 
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
-	firstDigit := strings.Split(address, ".")[1]
-	nodeString := firstDigit[len(firstDigit)-1:] + strings.Split(address, ".")[2]
+	firstDigit := strings.Split(address, ".")[2]
+	nodeString := firstDigit[len(firstDigit)-1:] + strings.Split(address, ".")[3]
 
 	log.Printf("Detected IP Address: %s", address)
 	log.Printf("Detected HiQnet address: %s (decimal), %X (hex)", nodeString, (nodeString))

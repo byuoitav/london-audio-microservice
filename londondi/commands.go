@@ -28,26 +28,25 @@ func BuildRawMuteCommand(input, address, status string) ([]byte, error) {
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
 	//the node is the hex representation of the HiQnet Address, which is assumed to be the last 4 digits of the IP address, well... sort of
-	firstDigit := strings.Split(address, ".")[1]
-	nodeString := firstDigit[len(firstDigit)-1:] + strings.Split(address, ".")[2]
+	firstDigit := strings.Split(address, ".")[2]
+	nodeString := firstDigit[len(firstDigit)-1:] + strings.Split(address, ".")[3]
 
-	log.Printf("Detected IP Address: %s", address)
-	log.Printf("Detected HiQnet address: %s (decimal), %X (hex)", nodeString, (nodeString))
+	log.Printf("Detected HiQnet address: %s (decimal)", nodeString)
 
-	nodeBytes, err := hex.DecodeString(nodeString)
+	nodeDec, err := strconv.Atoi(nodeString)
 	if err != nil {
-		errorMessage := "Could not decode node string: " + err.Error()
+		errorMessage := "Could not parse HiQnet node: " + err.Error()
 		log.Printf(errorMessage)
 		return []byte{}, errors.New(errorMessage)
 	}
 
-	for {
-		if len(nodeBytes) > LEN_NODE {
-			return []byte{}, errors.New("detected HiQnet node longer than 2 bytes")
-		} else if len(nodeBytes) == LEN_NODE {
-			nodeBytes = append([]byte{0x00}, nodeBytes...)
-		}
-	}
+	log.Printf("HiQnet address: %v, %x", nodeDec, nodeDec)
+
+	nodeBytes := make([]byte, 4)
+	binary.BigEndian.PutUint32(nodeBytes, uint32(nodeDec))
+	nodeBytes = nodeBytes[len(nodeBytes)-2:]
+
+	log.Printf("HiQnet address (hex): %X", nodeBytes)
 
 	command = append(command, nodeBytes...)
 	log.Printf("Command string: %X", command)
@@ -90,26 +89,20 @@ func BuildRawVolumeCommand(input string, address string, volume string) ([]byte,
 	command := []byte{DI_SETSVPERCENT}
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
-	firstDigit := strings.Split(address, ".")[1]
-	nodeString := firstDigit[len(firstDigit)-1:] + strings.Split(address, ".")[2]
+	firstDigit := strings.Split(address, ".")[2]
+	nodeString := firstDigit[len(firstDigit)-1:] + strings.Split(address, ".")[3]
 
-	log.Printf("Detected IP Address: %s", address)
-	log.Printf("Detected HiQnet address: %s (decimal), %X (hex)", nodeString, (nodeString))
+	log.Printf("Detected HiQnet address: %s (decimal)", nodeString)
 
-	nodeBytes, err := hex.DecodeString(nodeString)
+	nodeInt, err := strconv.Atoi(nodeString)
 	if err != nil {
-		errorMessage := "Could not decode node string: " + err.Error()
+		errorMessage := "Could not parse HiQnet node: " + err.Error()
 		log.Printf(errorMessage)
 		return []byte{}, errors.New(errorMessage)
 	}
 
-	for {
-		if len(nodeBytes) > LEN_NODE {
-			return []byte{}, errors.New("detected HiQnet node longer than 2 bytes")
-		} else if len(nodeBytes) == LEN_NODE {
-			nodeBytes = append([]byte{0x00}, nodeBytes...)
-		}
-	}
+	nodeBytes := make([]byte, 2)
+	binary.PutUvarint(nodeBytes, uint64(nodeInt))
 
 	command = append(command, nodeBytes...)
 	log.Printf("Command string: %s", hex.EncodeToString(command))
