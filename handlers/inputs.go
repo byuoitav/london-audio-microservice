@@ -19,6 +19,11 @@ func Mute(context echo.Context) error {
 		return context.JSON(http.StatusBadRequest, err.Error())
 	}
 
+	command, err = londondi.MakeSubstitutions(command, londondi.ENCODE)
+	if err != nil {
+		return context.JSON(http.StatusInternalServerError, err.Error())
+	}
+
 	err = londondi.HandleRawCommandBytes(command, address+":"+PORT)
 	if err != nil {
 		return context.JSON(http.StatusInternalServerError, err.Error())
@@ -35,6 +40,11 @@ func UnMute(context echo.Context) error {
 	command, err := londondi.BuildRawMuteCommand(input, address, "false")
 	if err != nil {
 		return context.JSON(http.StatusBadRequest, err.Error())
+	}
+
+	command, err = londondi.MakeSubstitutions(command, londondi.ENCODE)
+	if err != nil {
+		return context.JSON(http.StatusInternalServerError, err.Error())
 	}
 
 	err = londondi.HandleRawCommandBytes(command, address+":"+PORT)
@@ -56,7 +66,12 @@ func SetVolume(context echo.Context) error {
 		return context.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	err = londondi.HandleRawCommandBytes(command, address)
+	command, err = londondi.MakeSubstitutions(command, londondi.ENCODE)
+	if err != nil {
+		return context.JSON(http.StatusInternalServerError, err.Error())
+	}
+
+	err = londondi.HandleRawCommandBytes(command, address+":"+PORT)
 	if err != nil {
 		return context.JSON(http.StatusInternalServerError, err.Error())
 	}

@@ -58,5 +58,8 @@ func MakeSubstitutions(command []byte, toCheck map[string]int) ([]byte, error) {
 
 	}
 
+	stx := []byte{STX}
+	newCommand = append(stx, newCommand...)
+	newCommand = append(newCommand, ETX)
 	return newCommand, nil
 }

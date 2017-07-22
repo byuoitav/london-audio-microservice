@@ -20,17 +20,16 @@ import (
 const LEN_NODE = 2
 const LEN_ADDR = 5
 
-func BuildRawMuteCommand(input, address, status string) ([]byte, error) {
+//builds command, node, virtual device, and object
+func AddressCommand(commandByte byte, address string) ([]byte, error) {
 
-	log.Printf("Building raw mute command for input: %s on address: %s", input, address)
+	log.Printf("Addressing command %X to address %s...", commandByte, address)
 
-	command := []byte{DI_SETSV}
-	log.Printf("Command string: %s", hex.EncodeToString(command))
+	command := []byte{commandByte}
 
-	//the node is the hex representation of the HiQnet Address, which is assumed to be the last 4 digits of the IP address, well... sort of
+	//build HiQnet address based on IP address
 	firstDigit := strings.Split(address, ".")[2]
 	nodeString := firstDigit[len(firstDigit)-1:] + strings.Split(address, ".")[3]
-
 	log.Printf("Detected HiQnet address: %s (decimal)", nodeString)
 
 	nodeDec, err := strconv.Atoi(nodeString)
@@ -54,6 +53,20 @@ func BuildRawMuteCommand(input, address, status string) ([]byte, error) {
 	command = append(command, VIRTUAL_DEVICE)
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
+	return command, nil
+}
+
+func BuildRawMuteCommand(input, address, status string) ([]byte, error) {
+
+	log.Printf("Building raw mute command for input: %s on address: %s", input, address)
+
+	command, err := AddressCommand(DI_SETSV, address)
+	if err != nil {
+		errorMessage := "Could not address command: " + err.Error()
+		log.Printf(errorMessage)
+		return []byte{}, errors.New(errorMessage)
+	}
+
 	gainBlock, err := hex.DecodeString(input)
 	if err != nil {
 		errorMessage := "Could not decode input string: " + err.Error()
@@ -69,16 +82,6 @@ func BuildRawMuteCommand(input, address, status string) ([]byte, error) {
 	command = append(command, checksum)
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
-	command, _ = MakeSubstitutions(command, ENCODE)
-	log.Printf("Command string: %s", hex.EncodeToString(command))
-
-	stx := []byte{STX}
-	command = append(stx, command...)
-	log.Printf("Command string: %s", hex.EncodeToString(command))
-
-	command = append(command, ETX)
-	log.Printf("Command string: %s", hex.EncodeToString(command))
-
 	return command, nil
 }
 
@@ -86,29 +89,12 @@ func BuildRawVolumeCommand(input string, address string, volume string) ([]byte,
 
 	log.Printf("Building raw volume command for input: %s on address: %s", input, address)
 
-	command := []byte{DI_SETSVPERCENT}
-	log.Printf("Command string: %s", hex.EncodeToString(command))
-
-	firstDigit := strings.Split(address, ".")[2]
-	nodeString := firstDigit[len(firstDigit)-1:] + strings.Split(address, ".")[3]
-
-	log.Printf("Detected HiQnet address: %s (decimal)", nodeString)
-
-	nodeInt, err := strconv.Atoi(nodeString)
+	command, err := AddressCommand(DI_SETSV, address)
 	if err != nil {
-		errorMessage := "Could not parse HiQnet node: " + err.Error()
+		errorMessage := "Could not address command: " + err.Error()
 		log.Printf(errorMessage)
 		return []byte{}, errors.New(errorMessage)
 	}
-
-	nodeBytes := make([]byte, 2)
-	binary.PutUvarint(nodeBytes, uint64(nodeInt))
-
-	command = append(command, nodeBytes...)
-	log.Printf("Command string: %s", hex.EncodeToString(command))
-
-	command = append(command, VIRTUAL_DEVICE)
-	log.Printf("Command string: %s", hex.EncodeToString(command))
 
 	gainBlock, err := hex.DecodeString(input)
 	if err != nil {
@@ -141,17 +127,6 @@ func BuildRawVolumeCommand(input string, address string, volume string) ([]byte,
 	checksum := GetChecksumByte(command)
 
 	command = append(command, checksum)
-	log.Printf("Command string: %s", hex.EncodeToString(command))
-
-	command, _ = MakeSubstitutions(command, ENCODE)
-	log.Printf("Command string: %s", hex.EncodeToString(command))
-
-	STX := []byte{byte(ENCODE["STX"])}
-	command = append(STX, command...)
-	log.Printf("Command string: %s", hex.EncodeToString(command))
-
-	ETX := []byte{byte(ENCODE["ETX"])}
-	command = append(command, ETX...)
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
 	return command, nil
