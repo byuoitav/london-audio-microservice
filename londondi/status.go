@@ -28,11 +28,37 @@ func GetVolume(address, input string) (status.Volume, error) {
 		return status.Volume{}, errors.New(errorMessage)
 	}
 
-	command = Wrap(command)
+	command, err = Wrap(command)
+	if err != nil {
+		errorMessage := "Could not wrap command: " + err.Error()
+		log.Printf(errorMessage)
+		return status.Volume{}, errors.New(errorMessage)
+	}
 
 	response, err := HandleStatusCommand(command, address+":"+PORT)
 	if err != nil {
 		errorMessage := "Could not execute commands: " + err.Error()
+		log.Printf(errorMessage)
+		return status.Volume{}, errors.New(errorMessage)
+	}
+
+	response, err = Unwrap(response)
+	if err != nil {
+		errorMessage := "Could not unwrap message: " + err.Error()
+		log.Printf(errorMessage)
+		return status.Volume{}, errors.New(errorMessage)
+	}
+
+	response, err = MakeSubstitutions(response, DECODE)
+	if err != nil {
+		errorMessage := "Could not substitute reserved bytes: " + err.Error()
+		log.Printf(errorMessage)
+		return status.Volume{}, errors.New(errorMessage)
+	}
+
+	response, err = Validate(response)
+	if err != nil {
+		errorMessage := "Invalid message: " + err.Error()
 		log.Printf(errorMessage)
 		return status.Volume{}, errors.New(errorMessage)
 	}
@@ -59,16 +85,42 @@ func GetMute(address, input string) (status.MuteStatus, error) {
 
 	command, err = MakeSubstitutions(command, ENCODE)
 	if err != nil {
-		errorMessage := "Could not substitute escape bytes: " + err.Error()
+		errorMessage := "Could not substitute reserved bytes: " + err.Error()
 		log.Printf(errorMessage)
 		return status.MuteStatus{}, errors.New(errorMessage)
 	}
 
-	command = Wrap(command)
+	command, err = Wrap(command)
+	if err != nil {
+		errorMessage := "Could not wrap command: " + err.Error()
+		log.Printf(errorMessage)
+		return status.MuteStatus{}, errors.New(errorMessage)
+	}
 
 	response, err := HandleStatusCommand(command, address+":"+PORT)
 	if err != nil {
 		errorMessage := "Could not execute commands: " + err.Error()
+		log.Printf(errorMessage)
+		return status.MuteStatus{}, errors.New(errorMessage)
+	}
+
+	response, err = Unwrap(response)
+	if err != nil {
+		errorMessage := "Could not unwrap message: " + err.Error()
+		log.Printf(errorMessage)
+		return status.MuteStatus{}, errors.New(errorMessage)
+	}
+
+	response, err = MakeSubstitutions(response, DECODE)
+	if err != nil {
+		errorMessage := "Could not substitute reserved bytes: " + err.Error()
+		log.Printf(errorMessage)
+		return status.MuteStatus{}, errors.New(errorMessage)
+	}
+
+	response, err = Validate(response)
+	if err != nil {
+		errorMessage := "Invalid message: " + err.Error()
 		log.Printf(errorMessage)
 		return status.MuteStatus{}, errors.New(errorMessage)
 	}
@@ -153,12 +205,10 @@ func HandleStatusCommand(subscribe []byte, address string) ([]byte, error) {
 
 }
 
+//@pre: checksum byte removed
 func ParseVolumeStatus(message []byte) (status.Volume, error) {
 
-	message, err := ValidateMessage(message)
-	if err != nil {
-		return status.Volume{}, err
-	}
+	log.Printf("Parsing mute status message: %X", message)
 
 	//get data - always 4 bytes
 	data := message[len(message)-4:]
@@ -180,15 +230,12 @@ func ParseVolumeStatus(message []byte) (status.Volume, error) {
 	}, nil
 }
 
+//@pre: checksum byte removed
 func ParseMuteStatus(message []byte) (status.MuteStatus, error) {
 
 	log.Printf("Parsing mute status message: %X", message)
 
-	message, err := ValidateMessage(message)
-	if err != nil {
-		return status.MuteStatus{}, err
-	}
-
+	//mute status determined with last byte
 	data := message[len(message)-1:]
 	log.Printf("data: %X", data)
 	if bytes.EqualFold(data, []byte{0}) {
@@ -202,45 +249,4 @@ func ParseMuteStatus(message []byte) (status.MuteStatus, error) {
 	} else { //bad data
 		return status.MuteStatus{}, errors.New("Bad data in status message")
 	}
-}
-
-//validates message and returns the message with STX, ETX, and checksum bytes removed
-func ValidateMessage(message []byte) ([]byte, error) {
-
-	log.Printf("Validating status message %X", message)
-
-	//remove STX
-	message = bytes.TrimPrefix(message, []byte{STX})
-	log.Printf("message %X", message)
-
-	//remove ETX
-	message = bytes.TrimSuffix(message, []byte{ETX})
-	log.Printf("message %X", message)
-
-	//make substitutions
-	message, err := MakeSubstitutions(message, DECODE)
-	if err != nil {
-		errorMessage := "Could not make substitutions" + err.Error()
-		log.Printf(errorMessage)
-		return []byte{}, errors.New(errorMessage)
-	}
-
-	log.Printf("message %X", message)
-	//grrr...
-	message = bytes.Replace(message, []byte{0x1b}, []byte{}, -1)
-
-	log.Printf("message %X", message)
-
-	//check checksum
-	checksum := GetChecksumByte(message[:len(message)-1])
-	if checksum != message[len(message)-1] {
-		errorMessage := "Checksums do not match"
-		log.Printf(errorMessage)
-		return []byte{}, errors.New(errorMessage)
-	}
-
-	message = bytes.TrimSuffix(message, []byte{checksum})
-	log.Printf("message %X", message)
-
-	return message, nil
 }
