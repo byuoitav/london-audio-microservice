@@ -21,7 +21,16 @@ func GetVolume(address, input string) (status.Volume, error) {
 		return status.Volume{}, errors.New(errorMessage)
 	}
 
-	response, err := HandleStatusCommand(command)
+	command, err = MakeSubstitutions(command, ENCODE)
+	if err != nil {
+		errorMessage := "Could not substitute escape bytes: " + err.Error()
+		log.Printf(errorMessage)
+		return status.Volume{}, errors.New(errorMessage)
+	}
+
+	command = Wrap(command)
+
+	response, err := HandleStatusCommand(command, address)
 	if err != nil {
 		errorMessage := "Could not execute commands: " + err.Error()
 		log.Printf(errorMessage)
@@ -48,7 +57,16 @@ func GetMute(address, input string) (status.MuteStatus, error) {
 		return status.MuteStatus{}, errors.New(errorMessage)
 	}
 
-	response, err := HandleStatusCommand(command)
+	command, err = MakeSubstitutions(command, ENCODE)
+	if err != nil {
+		errorMessage := "Could not substitute escape bytes: " + err.Error()
+		log.Printf(errorMessage)
+		return status.MuteStatus{}, errors.New(errorMessage)
+	}
+
+	command = Wrap(command)
+
+	response, err := HandleStatusCommand(command, address)
 	if err != nil {
 		errorMessage := "Could not execute commands: " + err.Error()
 		log.Printf(errorMessage)
@@ -66,22 +84,22 @@ func GetMute(address, input string) (status.MuteStatus, error) {
 
 }
 
-func BuildSubscribeCommand(address, input, state string, messageType int32) (RawDICommand, error) {
+func BuildSubscribeCommand(address, input, state string, messageType byte) ([]byte, error) {
 
 	log.Printf("Building raw command to subsribe to %s of input %s on address %s", state, input, address)
 
-	command := []byte{byte(messageType)}
-
-	log.Printf("Command string: %s", hex.EncodeToString(command))
-
-	command = append(command, NODE...)
-	log.Printf("Command string: %s", hex.EncodeToString(command))
+	command, err := AddressCommand(messageType, address)
+	if err != nil {
+		errorMessage := "Could not address command: " + err.Error()
+		log.Printf(errorMessage)
+		return []byte{}, errors.New(errorMessage)
+	}
 
 	gainBlock, err := hex.DecodeString(input)
 	if err != nil {
 		errorMessage := "Could not decode input string: " + err.Error()
 		log.Printf(errorMessage)
-		return RawDICommand{}, errors.New(errorMessage)
+		return []byte{}, errors.New(errorMessage)
 	}
 
 	command = append(command, gainBlock...)
@@ -97,27 +115,14 @@ func BuildSubscribeCommand(address, input, state string, messageType int32) (Raw
 	command = append(command, checksum)
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
-	command, _ = MakeSubstitutions(command, ENCODE)
-	log.Printf("Command string: %s", hex.EncodeToString(command))
-
-	stx := []byte{STX}
-	command = append(stx, command...)
-	ETX := byte(ENCODE["ETX"])
-	command = append(command, ETX)
-	log.Printf("Command string: %s", hex.EncodeToString(command))
-
-	return RawDICommand{
-		Address: address,
-		Port:    PORT,
-		Command: hex.EncodeToString(command),
-	}, nil
+	return command, nil
 }
 
-func HandleStatusCommand(subscribe RawDICommand) ([]byte, error) {
+func HandleStatusCommand(subscribe []byte, address string) ([]byte, error) {
 
 	log.Printf("Handling status command...")
 
-	connection, err := net.Dial("tcp", subscribe.Address+":"+subscribe.Port)
+	connection, err := net.Dial("tcp", address)
 	if err != nil {
 		errorMessage := "Could not connect to device: " + err.Error()
 		log.Printf(errorMessage)
@@ -126,15 +131,7 @@ func HandleStatusCommand(subscribe RawDICommand) ([]byte, error) {
 
 	defer connection.Close()
 
-	log.Printf("Converting command to hex value...")
-	command, err := hex.DecodeString(subscribe.Command)
-	if err != nil {
-		errorMessage := "Could not convert command to hex value: " + err.Error()
-		log.Printf(errorMessage)
-		return []byte{}, errors.New(errorMessage)
-	}
-
-	_, err = connection.Write(command)
+	_, err = connection.Write(subscribe)
 	if err != nil {
 		errorMessage := "Could not send message to device: " + err.Error()
 		log.Printf(errorMessage)
