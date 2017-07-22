@@ -66,7 +66,7 @@ func GetMute(address, input string) (status.MuteStatus, error) {
 
 }
 
-func BuildSubscribeCommand(address, input, state string, messageType int32) (RawDICommand, error) {
+func BuildSubscribeCommand(address, input, state string, messageType byte) (RawDICommand, error) {
 
 	log.Printf("Building raw command to subsribe to %s of input %s on address %s", state, input, address)
 

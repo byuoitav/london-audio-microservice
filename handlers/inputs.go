@@ -17,7 +17,7 @@ func Mute(context echo.Context) error {
 		return context.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	err = londondi.HandleRawCommand(command)
+	err = londondi.HandleRawCommandBytes(command, address)
 	if err != nil {
 		return context.JSON(http.StatusInternalServerError, err.Error())
 	}
@@ -35,7 +35,7 @@ func UnMute(context echo.Context) error {
 		return context.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	err = londondi.HandleRawCommand(command)
+	err = londondi.HandleRawCommandBytes(command, address)
 	if err != nil {
 		return context.JSON(http.StatusInternalServerError, err.Error())
 	}
@@ -54,7 +54,7 @@ func SetVolume(context echo.Context) error {
 		return context.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	err = londondi.HandleRawCommand(command)
+	err = londondi.HandleRawCommandBytes(command, address)
 	if err != nil {
 		return context.JSON(http.StatusInternalServerError, err.Error())
 	}

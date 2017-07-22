@@ -36,13 +36,12 @@ var muteStates = map[string][]byte{
 }
 
 var PORT = "1023"
-
-const DI_SETSV = 0x88
-const DI_SETSVPERCENT = 0x8d
-const DI_SUBSCRIBESV = 0x89
-const DI_SUBSCRIBESVPERCENT = 0x8e
-const DI_UNSUBSCRIBESV = 0x8a
-const DI_UNSUBSCRIBESVPERCENT = 0x8f
+var DI_SETSV = byte(0x88)
+var DI_SETSVPERCENT = byte(0x8d)
+var DI_SUBSCRIBESV = byte(0x89)
+var DI_SUBSCRIBESVPERCENT = byte(0x8e)
+var DI_UNSUBSCRIBESV = byte(0x8a)
+var DI_UNSUBSCRIBESVPERCENT = byte(0x8f)
 
 //2 bytes for NODE, 1 byte for VIRTUAL_DEVICE should be the same for all cases!
 var NODE = []byte{0x00, 0x01, 0x03}
