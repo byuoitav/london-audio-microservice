@@ -27,10 +27,12 @@ func BuildRawMuteCommand(input, address, status string) ([]byte, error) {
 	command := []byte{DI_SETSV}
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
-	//the node is the hex representation of the HiQnet Address, which is assumed to be the last 4 digits of the IP address
-	nodeString := address[len(address)-LEN_ADDR:]
-	nodeString = strings.Split(nodeString, ".")[0] + strings.Split(nodeString, ".")[1]
-	log.Printf("Detected HiQnet address: %s", nodeString)
+	//the node is the hex representation of the HiQnet Address, which is assumed to be the last 4 digits of the IP address, well... sort of
+	firstDigit := strings.Split(address, ".")[1]
+	nodeString := firstDigit[len(firstDigit)-1:] + strings.Split(address, ".")[2]
+
+	log.Printf("Detected IP Address: %s", address)
+	log.Printf("Detected HiQnet address: %s (decimal), %X (hex)", nodeString, (nodeString))
 
 	nodeBytes, err := hex.DecodeString(nodeString)
 	if err != nil {
@@ -40,9 +42,10 @@ func BuildRawMuteCommand(input, address, status string) ([]byte, error) {
 	}
 
 	for {
-		nodeBytes = append([]byte{0x00}, nodeBytes...)
-		if len(nodeBytes) >= LEN_NODE {
-			break
+		if len(nodeBytes) > LEN_NODE {
+			return []byte{}, errors.New("detected HiQnet node longer than 2 bytes")
+		} else if len(nodeBytes) == LEN_NODE {
+			nodeBytes = append([]byte{0x00}, nodeBytes...)
 		}
 	}
 
@@ -87,9 +90,11 @@ func BuildRawVolumeCommand(input string, address string, volume string) ([]byte,
 	command := []byte{DI_SETSVPERCENT}
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
-	nodeString := address[len(address)-LEN_ADDR:]
-	nodeString = strings.Split(nodeString, ".")[0] + strings.Split(nodeString, ".")[1]
-	log.Printf("Detected HiQnet address: %s", nodeString)
+	firstDigit := strings.Split(address, ".")[1]
+	nodeString := firstDigit[len(firstDigit)-1:] + strings.Split(address, ".")[2]
+
+	log.Printf("Detected IP Address: %s", address)
+	log.Printf("Detected HiQnet address: %s (decimal), %X (hex)", nodeString, (nodeString))
 
 	nodeBytes, err := hex.DecodeString(nodeString)
 	if err != nil {
@@ -99,9 +104,10 @@ func BuildRawVolumeCommand(input string, address string, volume string) ([]byte,
 	}
 
 	for {
-		nodeBytes = append([]byte{0x00}, nodeBytes...)
-		if len(nodeBytes) >= LEN_NODE {
-			break
+		if len(nodeBytes) > LEN_NODE {
+			return []byte{}, errors.New("detected HiQnet node longer than 2 bytes")
+		} else if len(nodeBytes) == LEN_NODE {
+			nodeBytes = append([]byte{0x00}, nodeBytes...)
 		}
 	}
 

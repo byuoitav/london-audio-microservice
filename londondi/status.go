@@ -75,9 +75,11 @@ func BuildSubscribeCommand(address, input, state string, messageType byte) ([]by
 
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
-	nodeString := address[len(address)-LEN_ADDR:]
-	nodeString = strings.Split(nodeString, ".")[0] + strings.Split(nodeString, ".")[1]
-	log.Printf("Detected HiQnet address: %s", nodeString)
+	firstDigit := strings.Split(address, ".")[1]
+	nodeString := firstDigit[len(firstDigit)-1:] + strings.Split(address, ".")[2]
+
+	log.Printf("Detected IP Address: %s", address)
+	log.Printf("Detected HiQnet address: %s (decimal), %X (hex)", nodeString, (nodeString))
 
 	nodeBytes, err := hex.DecodeString(nodeString)
 	if err != nil {
@@ -87,12 +89,12 @@ func BuildSubscribeCommand(address, input, state string, messageType byte) ([]by
 	}
 
 	for {
-		nodeBytes = append([]byte{0x00}, nodeBytes...)
-		if len(nodeBytes) >= LEN_NODE {
-			break
+		if len(nodeBytes) > LEN_NODE {
+			return []byte{}, errors.New("detected HiQnet node longer than 2 bytes")
+		} else if len(nodeBytes) == LEN_NODE {
+			nodeBytes = append([]byte{0x00}, nodeBytes...)
 		}
 	}
-
 	command = append(command, nodeBytes...)
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 

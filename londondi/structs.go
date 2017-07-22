@@ -41,7 +41,6 @@ var test = map[bool][]byte{
 	false: {0x00, 0x00, 0x00, 0x00},
 }
 
-var PORT = "1023"
 var DI_SETSV = byte(0x88)
 var DI_SETSVPERCENT = byte(0x8d)
 var DI_SUBSCRIBESV = byte(0x89)
@@ -49,8 +48,9 @@ var DI_SUBSCRIBESVPERCENT = byte(0x8e)
 var DI_UNSUBSCRIBESV = byte(0x8a)
 var DI_UNSUBSCRIBESVPERCENT = byte(0x8f)
 
-//2 bytes for NODE, 1 byte for VIRTUAL_DEVICE should be the same for all cases!
+//VIRTUAL_DEVICE byte should be the same for all cases!
 var VIRTUAL_DEVICE = byte(0x03)
+var PORT = "1023"
 
 var RATE = []byte{0x00, 0x00, 0x00, 0x32} //represents 50 ms, the shortest interval
 
