@@ -3,7 +3,7 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/byuoitav/london-audio-microservice/packages/londondi"
+	"github.com/byuoitav/london-audio-microservice/londondi"
 	"github.com/jessemillar/jsonresp"
 	"github.com/labstack/echo"
 )
@@ -17,7 +17,7 @@ func Raw(context echo.Context) error {
 		return nil
 	}
 
-	commandError := londondi.HandleRawCommand(command)
+	commandError := londondi.HandleRawCommandString(command)
 	if commandError != nil {
 		jsonresp.New(context.Response(), http.StatusBadRequest, commandError.Error())
 		return nil

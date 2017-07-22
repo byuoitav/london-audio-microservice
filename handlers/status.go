@@ -3,13 +3,13 @@ package handlers
 import (
 	"net/http"
 
-	di "github.com/byuoitav/london-audio-microservice/packages/londondi"
+	di "github.com/byuoitav/london-audio-microservice/londondi"
 	"github.com/labstack/echo"
 )
 
 func GetMute(context echo.Context) error {
 
-	status, err := di.GetMute(context.Param("address"), context.Param("input"))
+	status, err := di.GetMute(context.Param("address")+":"+PORT, context.Param("input"))
 	if err != nil {
 		return context.JSON(http.StatusBadRequest, err.Error())
 	}
@@ -20,7 +20,7 @@ func GetMute(context echo.Context) error {
 
 func GetVolume(context echo.Context) error {
 
-	status, err := di.GetVolume(context.Param("address"), context.Param("input"))
+	status, err := di.GetVolume(context.Param("address")+":"+PORT, context.Param("input"))
 	if err != nil {
 		return context.JSON(http.StatusBadRequest, err.Error())
 	}
