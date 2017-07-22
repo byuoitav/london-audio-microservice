@@ -8,6 +8,7 @@ import (
 	"errors"
 	"log"
 	"net"
+	"strings"
 
 	"github.com/byuoitav/av-api/status"
 )
@@ -21,7 +22,7 @@ func GetVolume(address, input string) (status.Volume, error) {
 		return status.Volume{}, errors.New(errorMessage)
 	}
 
-	response, err := HandleStatusCommand(command)
+	response, err := HandleStatusCommand(command, address)
 	if err != nil {
 		errorMessage := "Could not execute commands: " + err.Error()
 		log.Printf(errorMessage)
@@ -48,7 +49,7 @@ func GetMute(address, input string) (status.MuteStatus, error) {
 		return status.MuteStatus{}, errors.New(errorMessage)
 	}
 
-	response, err := HandleStatusCommand(command)
+	response, err := HandleStatusCommand(command, address)
 	if err != nil {
 		errorMessage := "Could not execute commands: " + err.Error()
 		log.Printf(errorMessage)
@@ -66,7 +67,7 @@ func GetMute(address, input string) (status.MuteStatus, error) {
 
 }
 
-func BuildSubscribeCommand(address, input, state string, messageType byte) (RawDICommand, error) {
+func BuildSubscribeCommand(address, input, state string, messageType byte) ([]byte, error) {
 
 	log.Printf("Building raw command to subsribe to %s of input %s on address %s", state, input, address)
 
@@ -74,14 +75,35 @@ func BuildSubscribeCommand(address, input, state string, messageType byte) (RawD
 
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
-	command = append(command, NODE...)
+	nodeString := address[len(address)-LEN_ADDR:]
+	nodeString = strings.Split(nodeString, ".")[0] + strings.Split(nodeString, ".")[1]
+	log.Printf("Detected HiQnet address: %s", nodeString)
+
+	nodeBytes, err := hex.DecodeString(nodeString)
+	if err != nil {
+		errorMessage := "Could not decode node string: " + err.Error()
+		log.Printf(errorMessage)
+		return []byte{}, errors.New(errorMessage)
+	}
+
+	for {
+		nodeBytes = append([]byte{0x00}, nodeBytes...)
+		if len(nodeBytes) >= LEN_NODE {
+			break
+		}
+	}
+
+	command = append(command, nodeBytes...)
+	log.Printf("Command string: %s", hex.EncodeToString(command))
+
+	command = append(command, VIRTUAL_DEVICE)
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
 	gainBlock, err := hex.DecodeString(input)
 	if err != nil {
 		errorMessage := "Could not decode input string: " + err.Error()
 		log.Printf(errorMessage)
-		return RawDICommand{}, errors.New(errorMessage)
+		return []byte{}, errors.New(errorMessage)
 	}
 
 	command = append(command, gainBlock...)
@@ -106,18 +128,14 @@ func BuildSubscribeCommand(address, input, state string, messageType byte) (RawD
 	command = append(command, ETX)
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
-	return RawDICommand{
-		Address: address,
-		Port:    PORT,
-		Command: hex.EncodeToString(command),
-	}, nil
+	return command, nil
 }
 
-func HandleStatusCommand(subscribe RawDICommand) ([]byte, error) {
+func HandleStatusCommand(subscribe []byte, address string) ([]byte, error) {
 
 	log.Printf("Handling status command...")
 
-	connection, err := net.Dial("tcp", subscribe.Address+":"+subscribe.Port)
+	connection, err := net.Dial("tcp", address)
 	if err != nil {
 		errorMessage := "Could not connect to device: " + err.Error()
 		log.Printf(errorMessage)
@@ -126,15 +144,7 @@ func HandleStatusCommand(subscribe RawDICommand) ([]byte, error) {
 
 	defer connection.Close()
 
-	log.Printf("Converting command to hex value...")
-	command, err := hex.DecodeString(subscribe.Command)
-	if err != nil {
-		errorMessage := "Could not convert command to hex value: " + err.Error()
-		log.Printf(errorMessage)
-		return []byte{}, errors.New(errorMessage)
-	}
-
-	_, err = connection.Write(command)
+	_, err = connection.Write(subscribe)
 	if err != nil {
 		errorMessage := "Could not send message to device: " + err.Error()
 		log.Printf(errorMessage)

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"log"
 	"strconv"
+	"strings"
 )
 
 /* to set a state variable, <DI_SETSV>
@@ -16,6 +17,9 @@ import (
 <data>
 */
 
+const LEN_NODE = 2
+const LEN_ADDR = 5
+
 func BuildRawMuteCommand(input, address, status string) ([]byte, error) {
 
 	log.Printf("Building raw mute command for input: %s on address: %s", input, address)
@@ -23,7 +27,29 @@ func BuildRawMuteCommand(input, address, status string) ([]byte, error) {
 	command := []byte{DI_SETSV}
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
-	command = append(command, NODE...)
+	//the node is the hex representation of the HiQnet Address, which is assumed to be the last 4 digits of the IP address
+	nodeString := address[len(address)-LEN_ADDR:]
+	nodeString = strings.Split(nodeString, ".")[0] + strings.Split(nodeString, ".")[1]
+	log.Printf("Detected HiQnet address: %s", nodeString)
+
+	nodeBytes, err := hex.DecodeString(nodeString)
+	if err != nil {
+		errorMessage := "Could not decode node string: " + err.Error()
+		log.Printf(errorMessage)
+		return []byte{}, errors.New(errorMessage)
+	}
+
+	for {
+		nodeBytes = append([]byte{0x00}, nodeBytes...)
+		if len(nodeBytes) >= LEN_NODE {
+			break
+		}
+	}
+
+	command = append(command, nodeBytes...)
+	log.Printf("Command string: %X", command)
+
+	command = append(command, VIRTUAL_DEVICE)
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
 	gainBlock, err := hex.DecodeString(input)
@@ -61,7 +87,28 @@ func BuildRawVolumeCommand(input string, address string, volume string) ([]byte,
 	command := []byte{DI_SETSVPERCENT}
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
-	command = append(command, NODE...)
+	nodeString := address[len(address)-LEN_ADDR:]
+	nodeString = strings.Split(nodeString, ".")[0] + strings.Split(nodeString, ".")[1]
+	log.Printf("Detected HiQnet address: %s", nodeString)
+
+	nodeBytes, err := hex.DecodeString(nodeString)
+	if err != nil {
+		errorMessage := "Could not decode node string: " + err.Error()
+		log.Printf(errorMessage)
+		return []byte{}, errors.New(errorMessage)
+	}
+
+	for {
+		nodeBytes = append([]byte{0x00}, nodeBytes...)
+		if len(nodeBytes) >= LEN_NODE {
+			break
+		}
+	}
+
+	command = append(command, nodeBytes...)
+	log.Printf("Command string: %s", hex.EncodeToString(command))
+
+	command = append(command, VIRTUAL_DEVICE)
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
 	gainBlock, err := hex.DecodeString(input)

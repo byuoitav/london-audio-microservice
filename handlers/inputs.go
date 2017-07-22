@@ -7,6 +7,8 @@ import (
 	"github.com/labstack/echo"
 )
 
+const PORT = "1023"
+
 func Mute(context echo.Context) error {
 
 	input := context.Param("input")
@@ -17,7 +19,7 @@ func Mute(context echo.Context) error {
 		return context.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	err = londondi.HandleRawCommandBytes(command, address)
+	err = londondi.HandleRawCommandBytes(command, address+PORT)
 	if err != nil {
 		return context.JSON(http.StatusInternalServerError, err.Error())
 	}
@@ -35,7 +37,7 @@ func UnMute(context echo.Context) error {
 		return context.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	err = londondi.HandleRawCommandBytes(command, address)
+	err = londondi.HandleRawCommandBytes(command, address+PORT)
 	if err != nil {
 		return context.JSON(http.StatusInternalServerError, err.Error())
 	}
