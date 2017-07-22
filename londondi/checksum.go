@@ -52,14 +52,19 @@ func MakeSubstitutions(command []byte, toCheck map[string]int) ([]byte, error) {
 			newEscapeInt := value >> 8
 			iHateYou = append([]byte{byte(newEscapeInt)}, iHateYou...)
 		}
+
 		log.Printf("replacing %x with %x", value, substitutions[value])
 		newCommand = bytes.Replace(newCommand, iHateYou, substitutions[value], -1)
 		log.Printf("changed command: %x", newCommand)
 
 	}
 
-	stx := []byte{STX}
-	newCommand = append(stx, newCommand...)
-	newCommand = append(newCommand, ETX)
 	return newCommand, nil
+}
+
+func Wrap(command []byte) []byte {
+	stx := []byte{STX}
+	command = append(stx, command...)
+	command = append(command, ETX)
+	return command
 }

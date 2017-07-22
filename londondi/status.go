@@ -8,7 +8,6 @@ import (
 	"errors"
 	"log"
 	"net"
-	"strings"
 
 	"github.com/byuoitav/av-api/status"
 )
@@ -21,6 +20,15 @@ func GetVolume(address, input string) (status.Volume, error) {
 		log.Printf(errorMessage)
 		return status.Volume{}, errors.New(errorMessage)
 	}
+
+	command, err = MakeSubstitutions(command, ENCODE)
+	if err != nil {
+		errorMessage := "Could not substitute escape bytes: " + err.Error()
+		log.Printf(errorMessage)
+		return status.Volume{}, errors.New(errorMessage)
+	}
+
+	command = Wrap(command)
 
 	response, err := HandleStatusCommand(command, address)
 	if err != nil {
@@ -49,6 +57,15 @@ func GetMute(address, input string) (status.MuteStatus, error) {
 		return status.MuteStatus{}, errors.New(errorMessage)
 	}
 
+	command, err = MakeSubstitutions(command, ENCODE)
+	if err != nil {
+		errorMessage := "Could not substitute escape bytes: " + err.Error()
+		log.Printf(errorMessage)
+		return status.MuteStatus{}, errors.New(errorMessage)
+	}
+
+	command = Wrap(command)
+
 	response, err := HandleStatusCommand(command, address)
 	if err != nil {
 		errorMessage := "Could not execute commands: " + err.Error()
@@ -71,35 +88,12 @@ func BuildSubscribeCommand(address, input, state string, messageType byte) ([]by
 
 	log.Printf("Building raw command to subsribe to %s of input %s on address %s", state, input, address)
 
-	command := []byte{byte(messageType)}
-
-	log.Printf("Command string: %s", hex.EncodeToString(command))
-
-	firstDigit := strings.Split(address, ".")[2]
-	nodeString := firstDigit[len(firstDigit)-1:] + strings.Split(address, ".")[3]
-
-	log.Printf("Detected IP Address: %s", address)
-	log.Printf("Detected HiQnet address: %s (decimal), %X (hex)", nodeString, (nodeString))
-
-	nodeBytes, err := hex.DecodeString(nodeString)
+	command, err := AddressCommand(messageType, address)
 	if err != nil {
-		errorMessage := "Could not decode node string: " + err.Error()
+		errorMessage := "Could not address command: " + err.Error()
 		log.Printf(errorMessage)
 		return []byte{}, errors.New(errorMessage)
 	}
-
-	for {
-		if len(nodeBytes) > LEN_NODE {
-			return []byte{}, errors.New("detected HiQnet node longer than 2 bytes")
-		} else if len(nodeBytes) == LEN_NODE {
-			nodeBytes = append([]byte{0x00}, nodeBytes...)
-		}
-	}
-	command = append(command, nodeBytes...)
-	log.Printf("Command string: %s", hex.EncodeToString(command))
-
-	command = append(command, VIRTUAL_DEVICE)
-	log.Printf("Command string: %s", hex.EncodeToString(command))
 
 	gainBlock, err := hex.DecodeString(input)
 	if err != nil {
@@ -119,15 +113,6 @@ func BuildSubscribeCommand(address, input, state string, messageType byte) ([]by
 
 	checksum := GetChecksumByte(command)
 	command = append(command, checksum)
-	log.Printf("Command string: %s", hex.EncodeToString(command))
-
-	command, _ = MakeSubstitutions(command, ENCODE)
-	log.Printf("Command string: %s", hex.EncodeToString(command))
-
-	stx := []byte{STX}
-	command = append(stx, command...)
-	ETX := byte(ENCODE["ETX"])
-	command = append(command, ETX)
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
 	return command, nil
