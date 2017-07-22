@@ -89,7 +89,7 @@ func BuildRawVolumeCommand(input string, address string, volume string) ([]byte,
 
 	log.Printf("Building raw volume command for input: %s on address: %s", input, address)
 
-	command, err := AddressCommand(DI_SETSV, address)
+	command, err := AddressCommand(DI_SETSVPERCENT, address)
 	if err != nil {
 		errorMessage := "Could not address command: " + err.Error()
 		log.Printf(errorMessage)

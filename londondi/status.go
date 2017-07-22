@@ -30,7 +30,7 @@ func GetVolume(address, input string) (status.Volume, error) {
 
 	command = Wrap(command)
 
-	response, err := HandleStatusCommand(command, address)
+	response, err := HandleStatusCommand(command, address+":"+PORT)
 	if err != nil {
 		errorMessage := "Could not execute commands: " + err.Error()
 		log.Printf(errorMessage)
@@ -66,7 +66,7 @@ func GetMute(address, input string) (status.MuteStatus, error) {
 
 	command = Wrap(command)
 
-	response, err := HandleStatusCommand(command, address)
+	response, err := HandleStatusCommand(command, address+":"+PORT)
 	if err != nil {
 		errorMessage := "Could not execute commands: " + err.Error()
 		log.Printf(errorMessage)
