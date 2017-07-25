@@ -3,7 +3,7 @@ package handlers
 import (
 	"net/http"
 
-	di "github.com/byuoitav/london-audio-microservice/packages/londondi"
+	di "github.com/byuoitav/london-audio-microservice/londondi"
 	"github.com/labstack/echo"
 )
 

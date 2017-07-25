@@ -3,9 +3,11 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/byuoitav/london-audio-microservice/packages/londondi"
+	"github.com/byuoitav/london-audio-microservice/londondi"
 	"github.com/labstack/echo"
 )
+
+const PORT = "1023"
 
 func Mute(context echo.Context) error {
 
@@ -17,7 +19,17 @@ func Mute(context echo.Context) error {
 		return context.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	err = londondi.HandleRawCommand(command)
+	command, err = londondi.MakeSubstitutions(command, londondi.ENCODE)
+	if err != nil {
+		return context.JSON(http.StatusInternalServerError, err.Error())
+	}
+
+	command, err = londondi.Wrap(command)
+	if err != nil {
+		return context.JSON(http.StatusInternalServerError, err.Error())
+	}
+
+	err = londondi.HandleRawCommandBytes(command, address+":"+PORT)
 	if err != nil {
 		return context.JSON(http.StatusInternalServerError, err.Error())
 	}
@@ -35,7 +47,17 @@ func UnMute(context echo.Context) error {
 		return context.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	err = londondi.HandleRawCommand(command)
+	command, err = londondi.MakeSubstitutions(command, londondi.ENCODE)
+	if err != nil {
+		return context.JSON(http.StatusInternalServerError, err.Error())
+	}
+
+	command, err = londondi.Wrap(command)
+	if err != nil {
+		return context.JSON(http.StatusInternalServerError, err.Error())
+	}
+
+	err = londondi.HandleRawCommandBytes(command, address+":"+PORT)
 	if err != nil {
 		return context.JSON(http.StatusInternalServerError, err.Error())
 	}
@@ -54,7 +76,17 @@ func SetVolume(context echo.Context) error {
 		return context.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	err = londondi.HandleRawCommand(command)
+	command, err = londondi.MakeSubstitutions(command, londondi.ENCODE)
+	if err != nil {
+		return context.JSON(http.StatusInternalServerError, err.Error())
+	}
+
+	command, err = londondi.Wrap(command)
+	if err != nil {
+		return context.JSON(http.StatusInternalServerError, err.Error())
+	}
+
+	err = londondi.HandleRawCommandBytes(command, address+":"+PORT)
 	if err != nil {
 		return context.JSON(http.StatusInternalServerError, err.Error())
 	}

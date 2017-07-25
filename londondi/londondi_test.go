@@ -30,6 +30,69 @@ var RESULT_5 = []byte{0x1b, 0x82, 0x1b, 0x9b, 0x82}
 var CASE_6 = []byte{0x00, 0x01, 0x04}
 var RESULT_6 = []byte{0x00, 0x01, 0x04}
 
+//validating cases
+var CASE_7 = []byte{0x02, 0x8d, 0x23, 0xda, 0x1b, 0x83, 0x00, 0x01, 0x1b, 0x82, 0x00, 0x00, 0x00, 0x31, 0xff, 0xa1, 0x1b, 0x9b, 0x03}
+var RESULT_7 = []byte{0x8d, 0x23, 0xda, 0x03, 0x00, 0x01, 0x02, 0x00, 0x00, 0x00, 0x31, 0xff, 0xa1, 0x1b}
+
+var CASE_8 = []byte{0x02, 0x03} //begins with STX and ends with ETX
+var CASE_9 = []byte{0x02, 0x8d, 0x23, 0xda, 0x1b, 0x83, 0x02, 0x01, 0x1b, 0x82, 0x00, 0x00, 0x00, 0x31, 0xff, 0xa1, 0x1b, 0x9b, 0x03}
+
+//Wrap results
+var WRAP_1 = []byte{0x02, 0x00, 0x01, 0x04, 0x03}
+
+//Unwrap results
+var UNWRAP_1 = []byte{}
+
+func TestWrap(t *testing.T) {
+
+	//test pre-conditions
+	result, err := Wrap(CASE_5)
+	if err == nil {
+		t.Error("Allowed message to contain STX byte")
+		t.Fail()
+	}
+
+	result, err = Wrap(CASE_6)
+	if err != nil {
+		t.Error(err)
+		t.Fail()
+	}
+
+	//test post conditions
+	if !bytes.Equal(result, WRAP_1) {
+		msg := fmt.Sprintf("Expected %x, returned %x", WRAP_1, result)
+		t.Error(msg)
+	}
+
+}
+
+func TestUnwrap(t *testing.T) {
+
+	//test pre-conditions
+	result, err := Unwrap(CASE_0)
+	if err == nil {
+		t.Error("Allowed message that did not begin with STX and end with ETX")
+		t.Fail()
+	}
+
+	result, err = Unwrap(CASE_8)
+	if err != nil {
+		t.Error(err)
+		t.Fail()
+	}
+
+	if len(result) != 0 {
+		msg := fmt.Sprintf("Expected %x, returned %x", UNWRAP_1, result)
+		t.Error(msg)
+	}
+
+	result, err = Unwrap(CASE_9)
+	if err == nil {
+		t.Error("Did not throw error when message contained erroneous STX or ETX bytes")
+		t.Fail()
+	}
+}
+
 func TestSubstitutions(t *testing.T) {
 
 	fmt.Printf("\n\nTesting decoding...\n\n")
@@ -125,7 +188,7 @@ func TestSubstitutions(t *testing.T) {
 	}
 
 	//FINAL ROUND
-	fmt.Printf("\n\nFinal Round: %x\n\n", CASE_1)
+	fmt.Printf("\n\nReversibility Test: %x\n\n", CASE_1)
 	result, err = MakeSubstitutions(CASE_1, DECODE)
 	if err != nil {
 		t.Error(err)
@@ -144,4 +207,7 @@ func TestSubstitutions(t *testing.T) {
 		t.Error("Function not reversible! " + msg)
 	}
 
+}
+
+func TestValidate(t *testing.T) {
 }
