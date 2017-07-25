@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/byuoitav/authmiddleware"
@@ -13,11 +12,6 @@ import (
 )
 
 func main() {
-	err := hateoas.Load("https://raw.githubusercontent.com/byuoitav/london-audio-microservice/master/swagger.json")
-	if err != nil {
-		log.Fatalln("Could not load swagger.json file. Error: " + err.Error())
-	}
-
 	port := ":8009"
 	router := echo.New()
 	router.Pre(middleware.RemoveTrailingSlash())
@@ -31,7 +25,15 @@ func main() {
 
 	secure.GET("/raw", handlers.RawInfo)
 
+	//functionality
 	secure.POST("/raw", handlers.Raw)
+	secure.GET("/:address/:input/volume/mute", handlers.Mute)
+	secure.GET("/:address/:input/volume/unmute", handlers.UnMute)
+	secure.GET("/:address/:input/volume/set/:level", handlers.SetVolume)
+
+	//status
+	secure.GET("/:address/:input/volume/level", handlers.GetVolume)
+	secure.GET("/:address/:input/mute/status", handlers.GetMute)
 
 	server := http.Server{
 		Addr:           port,
