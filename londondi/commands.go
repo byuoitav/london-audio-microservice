@@ -26,20 +26,16 @@ func GetCommandAddress(commandByte byte, address string) ([]byte, error) {
 	command := []byte{commandByte}
 
 	nodeBytes := make([]byte, 2)
-	log.Printf("HiQnet address (hex): %X", nodeBytes)
-
 	command = append(command, nodeBytes...)
-	log.Printf("Command string: %X", command)
 
 	command = append(command, VIRTUAL_DEVICE)
-	log.Printf("Command string: %s", hex.EncodeToString(command))
 
 	return command, nil
 }
 
 func BuildRawMuteCommand(input, address, status string) ([]byte, error) {
 
-	log.Printf("Building raw mute command for input: %s on address: %s", input, address)
+	log.Printf("Building raw mute command for input: %s at address: %s", input, address)
 
 	command, err := GetCommandAddress(DI_SETSV, address)
 	if err != nil {
@@ -67,7 +63,6 @@ func BuildRawMuteCommand(input, address, status string) ([]byte, error) {
 }
 
 func BuildRawVolumeCommand(input string, address string, volume string) ([]byte, error) {
-
 	log.Printf("Building raw volume command for input: %s on address: %s", input, address)
 
 	command, err := GetCommandAddress(DI_SETSVPERCENT, address)
