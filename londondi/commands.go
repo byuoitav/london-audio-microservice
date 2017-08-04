@@ -23,17 +23,9 @@ const LEN_ADDR = 5
 func GetCommandAddress(commandByte byte, address string) ([]byte, error) {
 
 	log.Printf("Addressing command %X to address %s...", commandByte, address)
-
 	command := []byte{commandByte}
 
-	//HiQnet ID is always 0
-	nodeDec := 0
-	log.Printf("HiQnet address: %v, %x", nodeDec, nodeDec)
-
 	nodeBytes := make([]byte, 4)
-	binary.BigEndian.PutUint32(nodeBytes, uint32(nodeDec))
-	nodeBytes = nodeBytes[len(nodeBytes)-2:]
-
 	log.Printf("HiQnet address (hex): %X", nodeBytes)
 
 	command = append(command, nodeBytes...)

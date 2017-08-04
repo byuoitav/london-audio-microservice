@@ -8,6 +8,7 @@ import (
 	"errors"
 	"log"
 	"net"
+	"time"
 
 	"github.com/byuoitav/av-api/status"
 )
@@ -182,6 +183,7 @@ func HandleStatusCommand(subscribe []byte, address string) ([]byte, error) {
 	}
 
 	defer connection.Close()
+	connection.SetReadDeadline(time.Now().Add(5 * time.Second))
 
 	_, err = connection.Write(subscribe)
 	if err != nil {
