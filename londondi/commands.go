@@ -6,7 +6,6 @@ import (
 	"errors"
 	"log"
 	"strconv"
-	"strings"
 )
 
 /* to set a state variable, <DI_SETSV>
@@ -21,24 +20,14 @@ const LEN_NODE = 2
 const LEN_ADDR = 5
 
 //builds command, node, virtual device, and object
-func AddressCommand(commandByte byte, address string) ([]byte, error) {
+func GetCommandAddress(commandByte byte, address string) ([]byte, error) {
 
 	log.Printf("Addressing command %X to address %s...", commandByte, address)
 
 	command := []byte{commandByte}
 
-	//build HiQnet address based on IP address
-	firstDigit := strings.Split(address, ".")[2]
-	nodeString := firstDigit[len(firstDigit)-1:] + strings.Split(address, ".")[3]
-	log.Printf("Detected HiQnet address: %s (decimal)", nodeString)
-
-	nodeDec, err := strconv.Atoi(nodeString)
-	if err != nil {
-		errorMessage := "Could not parse HiQnet node: " + err.Error()
-		log.Printf(errorMessage)
-		return []byte{}, errors.New(errorMessage)
-	}
-
+	//HiQnet ID is always 0
+	nodeDec := 0
 	log.Printf("HiQnet address: %v, %x", nodeDec, nodeDec)
 
 	nodeBytes := make([]byte, 4)
@@ -60,7 +49,7 @@ func BuildRawMuteCommand(input, address, status string) ([]byte, error) {
 
 	log.Printf("Building raw mute command for input: %s on address: %s", input, address)
 
-	command, err := AddressCommand(DI_SETSV, address)
+	command, err := GetCommandAddress(DI_SETSV, address)
 	if err != nil {
 		errorMessage := "Could not address command: " + err.Error()
 		log.Printf(errorMessage)
@@ -89,7 +78,7 @@ func BuildRawVolumeCommand(input string, address string, volume string) ([]byte,
 
 	log.Printf("Building raw volume command for input: %s on address: %s", input, address)
 
-	command, err := AddressCommand(DI_SETSVPERCENT, address)
+	command, err := GetCommandAddress(DI_SETSVPERCENT, address)
 	if err != nil {
 		errorMessage := "Could not address command: " + err.Error()
 		log.Printf(errorMessage)

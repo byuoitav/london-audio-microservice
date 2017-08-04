@@ -140,7 +140,7 @@ func BuildSubscribeCommand(address, input, state string, messageType byte) ([]by
 
 	log.Printf("Building raw command to subsribe to %s of input %s on address %s", state, input, address)
 
-	command, err := AddressCommand(messageType, address)
+	command, err := GetCommandAddress(messageType, address)
 	if err != nil {
 		errorMessage := "Could not address command: " + err.Error()
 		log.Printf(errorMessage)
