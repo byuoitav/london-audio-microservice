@@ -10,127 +10,127 @@ import (
 	"net"
 	"time"
 
-	"github.com/byuoitav/av-api/status"
+	se "github.com/byuoitav/av-api/statusevaluators"
 )
 
-func GetVolume(address, input string) (status.Volume, error) {
+func GetVolume(address, input string) (se.Volume, error) {
 
 	command, err := BuildSubscribeCommand(address, input, "volume", DI_SUBSCRIBESVPERCENT)
 	if err != nil {
 		errorMessage := "Could not build subscribe command: " + err.Error()
 		log.Printf(errorMessage)
-		return status.Volume{}, errors.New(errorMessage)
+		return se.Volume{}, errors.New(errorMessage)
 	}
 
 	command, err = MakeSubstitutions(command, ENCODE)
 	if err != nil {
 		errorMessage := "Could not substitute escape bytes: " + err.Error()
 		log.Printf(errorMessage)
-		return status.Volume{}, errors.New(errorMessage)
+		return se.Volume{}, errors.New(errorMessage)
 	}
 
 	command, err = Wrap(command)
 	if err != nil {
 		errorMessage := "Could not wrap command: " + err.Error()
 		log.Printf(errorMessage)
-		return status.Volume{}, errors.New(errorMessage)
+		return se.Volume{}, errors.New(errorMessage)
 	}
 
 	response, err := HandleStatusCommand(command, address+":"+PORT)
 	if err != nil {
 		errorMessage := "Could not execute commands: " + err.Error()
 		log.Printf(errorMessage)
-		return status.Volume{}, errors.New(errorMessage)
+		return se.Volume{}, errors.New(errorMessage)
 	}
 
 	response, err = Unwrap(response)
 	if err != nil {
 		errorMessage := "Could not unwrap message: " + err.Error()
 		log.Printf(errorMessage)
-		return status.Volume{}, errors.New(errorMessage)
+		return se.Volume{}, errors.New(errorMessage)
 	}
 
 	response, err = MakeSubstitutions(response, DECODE)
 	if err != nil {
 		errorMessage := "Could not substitute reserved bytes: " + err.Error()
 		log.Printf(errorMessage)
-		return status.Volume{}, errors.New(errorMessage)
+		return se.Volume{}, errors.New(errorMessage)
 	}
 
 	response, err = Validate(response)
 	if err != nil {
 		errorMessage := "Invalid message: " + err.Error()
 		log.Printf(errorMessage)
-		return status.Volume{}, errors.New(errorMessage)
+		return se.Volume{}, errors.New(errorMessage)
 	}
 
 	state, err := ParseVolumeStatus(response)
 	if err != nil {
 		errorMessage := "Could not parse response: " + err.Error()
 		log.Printf(errorMessage)
-		return status.Volume{}, errors.New(errorMessage)
+		return se.Volume{}, errors.New(errorMessage)
 	}
 
 	return state, nil
 
 }
 
-func GetMute(address, input string) (status.MuteStatus, error) {
+func GetMute(address, input string) (se.MuteStatus, error) {
 
 	command, err := BuildSubscribeCommand(address, input, "mute", DI_SUBSCRIBESV)
 	if err != nil {
 		errorMessage := "Could not build subscribe command: " + err.Error()
 		log.Printf(errorMessage)
-		return status.MuteStatus{}, errors.New(errorMessage)
+		return se.MuteStatus{}, errors.New(errorMessage)
 	}
 
 	command, err = MakeSubstitutions(command, ENCODE)
 	if err != nil {
 		errorMessage := "Could not substitute reserved bytes: " + err.Error()
 		log.Printf(errorMessage)
-		return status.MuteStatus{}, errors.New(errorMessage)
+		return se.MuteStatus{}, errors.New(errorMessage)
 	}
 
 	command, err = Wrap(command)
 	if err != nil {
 		errorMessage := "Could not wrap command: " + err.Error()
 		log.Printf(errorMessage)
-		return status.MuteStatus{}, errors.New(errorMessage)
+		return se.MuteStatus{}, errors.New(errorMessage)
 	}
 
 	response, err := HandleStatusCommand(command, address+":"+PORT)
 	if err != nil {
 		errorMessage := "Could not execute commands: " + err.Error()
 		log.Printf(errorMessage)
-		return status.MuteStatus{}, errors.New(errorMessage)
+		return se.MuteStatus{}, errors.New(errorMessage)
 	}
 
 	response, err = Unwrap(response)
 	if err != nil {
 		errorMessage := "Could not unwrap message: " + err.Error()
 		log.Printf(errorMessage)
-		return status.MuteStatus{}, errors.New(errorMessage)
+		return se.MuteStatus{}, errors.New(errorMessage)
 	}
 
 	response, err = MakeSubstitutions(response, DECODE)
 	if err != nil {
 		errorMessage := "Could not substitute reserved bytes: " + err.Error()
 		log.Printf(errorMessage)
-		return status.MuteStatus{}, errors.New(errorMessage)
+		return se.MuteStatus{}, errors.New(errorMessage)
 	}
 
 	response, err = Validate(response)
 	if err != nil {
 		errorMessage := "Invalid message: " + err.Error()
 		log.Printf(errorMessage)
-		return status.MuteStatus{}, errors.New(errorMessage)
+		return se.MuteStatus{}, errors.New(errorMessage)
 	}
 
 	state, err := ParseMuteStatus(response)
 	if err != nil {
 		errorMessage := "Could not parse response: " + err.Error()
 		log.Printf(errorMessage)
-		return status.MuteStatus{}, errors.New(errorMessage)
+		return se.MuteStatus{}, errors.New(errorMessage)
 	}
 
 	return state, nil
@@ -208,7 +208,7 @@ func HandleStatusCommand(subscribe []byte, address string) ([]byte, error) {
 }
 
 //@pre: checksum byte removed
-func ParseVolumeStatus(message []byte) (status.Volume, error) {
+func ParseVolumeStatus(message []byte) (se.Volume, error) {
 
 	log.Printf("Parsing mute status message: %X", message)
 
@@ -227,13 +227,13 @@ func ParseVolumeStatus(message []byte) (status.Volume, error) {
 
 	trueValue++ //not sure why it comes up with the wrong number
 
-	return status.Volume{
+	return se.Volume{
 		Volume: int(trueValue),
 	}, nil
 }
 
 //@pre: checksum byte removed
-func ParseMuteStatus(message []byte) (status.MuteStatus, error) {
+func ParseMuteStatus(message []byte) (se.MuteStatus, error) {
 
 	log.Printf("Parsing mute status message: %X", message)
 
@@ -241,14 +241,14 @@ func ParseMuteStatus(message []byte) (status.MuteStatus, error) {
 	data := message[len(message)-1:]
 	log.Printf("data: %X", data)
 	if bytes.EqualFold(data, []byte{0}) {
-		return status.MuteStatus{
+		return se.MuteStatus{
 			Muted: false,
 		}, nil
 	} else if bytes.EqualFold(data, []byte{1}) {
-		return status.MuteStatus{
+		return se.MuteStatus{
 			Muted: true,
 		}, nil
 	} else { //bad data
-		return status.MuteStatus{}, errors.New("Bad data in status message")
+		return se.MuteStatus{}, errors.New("Bad data in status message")
 	}
 }
