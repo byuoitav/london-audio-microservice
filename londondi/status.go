@@ -183,7 +183,7 @@ func HandleStatusCommand(subscribe []byte, address string) ([]byte, error) {
 	}
 
 	defer connection.Close()
-	connection.SetReadDeadline(time.Now().Add(5 * time.Second))
+	connection.SetReadDeadline(time.Now().Add(10 * time.Second))
 
 	_, err = connection.Write(subscribe)
 	if err != nil {
