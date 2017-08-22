@@ -8,6 +8,7 @@ import (
 	"errors"
 	"log"
 	"net"
+	"time"
 
 	"github.com/byuoitav/av-api/status"
 )
@@ -140,7 +141,7 @@ func BuildSubscribeCommand(address, input, state string, messageType byte) ([]by
 
 	log.Printf("Building raw command to subsribe to %s of input %s on address %s", state, input, address)
 
-	command, err := AddressCommand(messageType, address)
+	command, err := GetCommandAddress(messageType, address)
 	if err != nil {
 		errorMessage := "Could not address command: " + err.Error()
 		log.Printf(errorMessage)
@@ -182,6 +183,7 @@ func HandleStatusCommand(subscribe []byte, address string) ([]byte, error) {
 	}
 
 	defer connection.Close()
+	connection.SetReadDeadline(time.Now().Add(5 * time.Second))
 
 	_, err = connection.Write(subscribe)
 	if err != nil {
