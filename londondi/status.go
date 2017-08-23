@@ -13,7 +13,11 @@ import (
 	se "github.com/byuoitav/av-api/statusevaluators"
 )
 
-func GetVolume(address, input string) (se.Volume, error) {
+
+const TIMEOUT = 10
+
+func GetVolume(address, input string) (status.Volume, error) {
+
 
 	command, err := BuildSubscribeCommand(address, input, "volume", DI_SUBSCRIBESVPERCENT)
 	if err != nil {
@@ -183,7 +187,9 @@ func HandleStatusCommand(subscribe []byte, address string) ([]byte, error) {
 	}
 
 	defer connection.Close()
-	connection.SetReadDeadline(time.Now().Add(10 * time.Second))
+
+	connection.SetReadDeadline(time.Now().Add(TIMEOUT * time.Second))
+
 
 	_, err = connection.Write(subscribe)
 	if err != nil {
