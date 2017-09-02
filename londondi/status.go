@@ -17,14 +17,14 @@ import (
 
 func GetVolume(address, input string) (se.Volume, error) {
 
-	subscribe, err := BuildCommand(address, input, "volume", []byte{}, Subscribe)
+	subscribe, err := BuildCommand(address, input, "volume", []byte{}, SubscribePercent)
 	if err != nil {
 		msg := fmt.Sprintf("unable to build subscribe command %s", err.Error())
 		log.Printf("%s", color.HiRedString("[error] %s", msg))
 		return se.Volume{}, errors.New(msg)
 	}
 
-	unsubscribe, err := BuildCommand(address, input, "volume", []byte{}, Unsubscribe)
+	unsubscribe, err := BuildCommand(address, input, "volume", []byte{}, UnsubscribePercent)
 	if err != nil {
 		msg := fmt.Sprintf("unable to build unsubscribe command %s", err.Error())
 		log.Printf("%s", color.HiRedString("[error] %s", msg))
@@ -72,6 +72,8 @@ func GetVolume(address, input string) (se.Volume, error) {
 
 func GetMute(address, input string) (se.MuteStatus, error) {
 
+	log.Printf("%s", color.HiMagentaString("[status] getting mute status of channel %X from device at address %s", input, address))
+
 	subscribe, err := BuildCommand(address, input, "volume", []byte{}, Subscribe)
 	if err != nil {
 		msg := fmt.Sprintf("unable to build subscribe command %s", err.Error())
@@ -88,7 +90,7 @@ func GetMute(address, input string) (se.MuteStatus, error) {
 
 	response, err := GetStatus(subscribe, unsubscribe, address+":"+PORT)
 	if err != nil {
-		errorMessage := "Could not execute commands: " + err.Error()
+		errorMessage := "could not execute commands: " + err.Error()
 		log.Printf(errorMessage)
 		return se.MuteStatus{}, errors.New(errorMessage)
 	}
@@ -121,11 +123,15 @@ func GetMute(address, input string) (se.MuteStatus, error) {
 		return se.MuteStatus{}, errors.New(errorMessage)
 	}
 
+	log.Printf("%s", color.HiMagentaString("[status] successfully retrieved status"))
+
 	return state, nil
 
 }
 
 func BuildCommand(address, input, status string, data []byte, method Method) ([]byte, error) {
+
+	log.Printf("[command] building command...")
 
 	command, err := BuildRawCommand(address, input, status, data, method)
 	if err != nil {
@@ -211,7 +217,7 @@ func BuildRawCommand(address, input, state string, data []byte, method Method) (
 
 func GetStatus(subscribe, unsubscribe []byte, address string) ([]byte, error) {
 
-	log.Printf("[status] handling status command: %s...", color.HiBlueString("%x", subscribe))
+	log.Printf("[status] handling status command: %s...", color.HiMagentaString("%X", subscribe))
 
 	connection, err := connect.GetConnection(address)
 	if err != nil {
@@ -219,6 +225,8 @@ func GetStatus(subscribe, unsubscribe []byte, address string) ([]byte, error) {
 		log.Printf("%s", color.HiRedString("[error] %s", msg))
 		return []byte{}, errors.New(msg)
 	}
+
+	log.Printf("[status] writing status command...")
 
 	_, err = connection.Write(subscribe)
 	if neterr, ok := err.(net.Error); ok && neterr.Timeout() {
@@ -231,6 +239,7 @@ func GetStatus(subscribe, unsubscribe []byte, address string) ([]byte, error) {
 		return []byte{}, errors.New(msg)
 	}
 
+	log.Printf("[status] reading status response...")
 	reader := bufio.NewReader(connection)
 	response, err := reader.ReadBytes(ETX)
 	if neterr, ok := err.(net.Error); ok && neterr.Timeout() {
@@ -238,7 +247,7 @@ func GetStatus(subscribe, unsubscribe []byte, address string) ([]byte, error) {
 	}
 
 	if err != nil {
-		msg := fmt.Sprintf("could not read status message to device: %s", err.Error())
+		msg := fmt.Sprintf("device not responding: %s", err.Error())
 		log.Printf("%s", color.HiRedString("[error] %s", msg))
 		return []byte{}, errors.New(msg)
 	}

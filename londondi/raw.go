@@ -46,25 +46,24 @@ func HandleRawCommandBytes(command []byte, address string) error {
 
 	connection, err := connect.GetConnection(address)
 	if err != nil {
-		msg := fmt.Sprintf("problem getting connection to device: %s", err.Error())
+		msg := fmt.Sprintf("unable to connect to device %s", err.Error())
+		log.Printf("%s", color.HiRedString("[error] %s", msg))
 		return errors.New(msg)
 	}
 
 	_, err = connection.Write(command)
 	if err != nil {
-
 		if neterr, ok := err.(net.Error); ok && neterr.Timeout() {
-
 			_, err = connect.HandleTimeout(connection, command, connect.Write)
 		}
 	}
 
 	if err != nil {
-
-		msg := color.HiRedString("could not write to device: ", err.Error())
-		log.Printf("%s %s", color.HiRedString("[error]"), msg)
+		msg := fmt.Sprintf("unable to write to connection: %s", err.Error())
+		log.Printf("%s", color.HiRedString("[error] %s", msg))
 		return errors.New(msg)
 	}
 
+	log.Printf("%s", color.HiGreenString("[command] successfully sent command"))
 	return nil
 }

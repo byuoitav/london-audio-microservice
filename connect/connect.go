@@ -17,17 +17,13 @@ var CONNS = sync.Map{}
 
 func GetConnection(address string) (*net.TCPConn, error) {
 
-	color.Set(color.FgHiCyan)
-	log.Printf("[connection] getting connection to address on device %s", address)
-	color.Unset()
+	log.Printf("%s", color.HiCyanString("[connection] getting connection to address on device %s", address))
 
 	//first see if the entry is in the map
 	conn, ok := CONNS.Load(address)
 	if !ok {
 
-		color.Set(color.FgHiCyan)
-		log.Printf("[connection] connection not found, connecting to %s", address)
-		color.Unset()
+		log.Printf("[connection] connection to %s not found, connecting...", address)
 
 		addr, err := net.ResolveTCPAddr("tcp", address)
 		if err != nil {
@@ -40,7 +36,8 @@ func GetConnection(address string) (*net.TCPConn, error) {
 		}
 
 		conn.SetDeadline(time.Now().Add(TIMEOUT * time.Second))
-		CONNS.LoadOrStore(address, conn)
+
+		CONNS.LoadOrStore(address, *conn)
 
 		return conn, nil
 	}
@@ -55,19 +52,18 @@ func GetConnection(address string) (*net.TCPConn, error) {
 //refreshes the connection by extending the deadline, then re-writes msg to the
 //connection or re-reads until the first byte of msg is found
 //@pre conn has connected successfully prior to this function call -- otherwise it will trigger a panic!
-func HandleTimeout(conn *net.TCPConn, msg []byte, act ReadWrite) ([]byte, error) {
+func HandleTimeout(conn *net.TCPConn, msg []byte, method ReadWrite) ([]byte, error) {
 
 	//these three happen in any case
-	errMsg := color.HiRedString("[connection] connection timed out, retrying...")
+	log.Printf("%s", color.HiRedString("[connection] connection timed out, retrying..."))
 
 	if len(msg) == 0 {
 		return []byte{}, errors.New("cannot write empty message to TCP connection")
 	}
 
-	log.Printf("%s", errMsg)
 	conn.SetDeadline(time.Now().Add(TIMEOUT * time.Second))
 
-	if act == Write {
+	if method == Write {
 
 		_, err := conn.Write(msg)
 		return msg, err
