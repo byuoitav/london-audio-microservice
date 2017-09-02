@@ -19,28 +19,21 @@ const TIMEOUT = 10
 
 func GetVolume(address, input string) (se.Volume, error) {
 
-	command, err := BuildSubscribeCommand(address, input, "volume", DI_SUBSCRIBESVPERCENT)
+	subscribe, err := BuildCommand(address, input, "volume", Subscribe)
 	if err != nil {
-		errorMessage := "Could not build subscribe command: " + err.Error()
-		log.Printf(errorMessage)
-		return se.Volume{}, errors.New(errorMessage)
+		msg := fmt.Sprintf("unable to build subscribe command %s", err.Error())
+		log.Printf("%s", color.HiRedString("[error] %s", msg))
+		return se.Volume{}, errors.New(msg)
 	}
 
-	command, err = MakeSubstitutions(command, ENCODE)
+	unsubscribe, err := BuildCommand(address, input, "volume", Unsubscribe)
 	if err != nil {
-		errorMessage := "Could not substitute escape bytes: " + err.Error()
-		log.Printf(errorMessage)
-		return se.Volume{}, errors.New(errorMessage)
+		msg := fmt.Sprintf("unable to build unsubscribe command %s", err.Error())
+		log.Printf("%s", color.HiRedString("[error] %s", msg))
+		return se.Volume{}, errors.New(msg)
 	}
 
-	command, err = Wrap(command)
-	if err != nil {
-		errorMessage := "Could not wrap command: " + err.Error()
-		log.Printf(errorMessage)
-		return se.Volume{}, errors.New(errorMessage)
-	}
-
-	response, err := HandleStatusCommand(command, address+":"+PORT)
+	response, err := HandleStatusCommand(subscribe, unsubscribe, address+":"+PORT)
 	if err != nil {
 		errorMessage := "Could not execute commands: " + err.Error()
 		log.Printf(errorMessage)
@@ -81,28 +74,21 @@ func GetVolume(address, input string) (se.Volume, error) {
 
 func GetMute(address, input string) (se.MuteStatus, error) {
 
-	command, err := BuildSubscribeCommand(address, input, "mute", DI_SUBSCRIBESV)
+	subscribe, err := BuildCommand(address, input, "volume", Subscribe)
 	if err != nil {
-		errorMessage := "Could not build subscribe command: " + err.Error()
-		log.Printf(errorMessage)
-		return se.MuteStatus{}, errors.New(errorMessage)
+		msg := fmt.Sprintf("unable to build subscribe command %s", err.Error())
+		log.Printf("%s", color.HiRedString("[error] %s", msg))
+		return se.MuteStatus{}, errors.New(msg)
 	}
 
-	command, err = MakeSubstitutions(command, ENCODE)
+	unsubscribe, err := BuildCommand(address, input, "volume", Unsubscribe)
 	if err != nil {
-		errorMessage := "Could not substitute reserved bytes: " + err.Error()
-		log.Printf(errorMessage)
-		return se.MuteStatus{}, errors.New(errorMessage)
+		msg := fmt.Sprintf("unable to build unsubscribe command %s", err.Error())
+		log.Printf("%s", color.HiRedString("[error] %s", msg))
+		return se.MuteStatus{}, errors.New(msg)
 	}
 
-	command, err = Wrap(command)
-	if err != nil {
-		errorMessage := "Could not wrap command: " + err.Error()
-		log.Printf(errorMessage)
-		return se.MuteStatus{}, errors.New(errorMessage)
-	}
-
-	response, err := HandleStatusCommand(command, address+":"+PORT)
+	response, err := HandleStatusCommand(subscribe, unsubscribe, address+":"+PORT)
 	if err != nil {
 		errorMessage := "Could not execute commands: " + err.Error()
 		log.Printf(errorMessage)
@@ -141,22 +127,60 @@ func GetMute(address, input string) (se.MuteStatus, error) {
 
 }
 
-func BuildSubscribeCommand(address, input, state string, messageType byte) ([]byte, error) {
+func BuildCommand(address, input, status string, method Method) ([]byte, error) {
 
-	log.Printf("Building raw command to subsribe to %s of input %s on address %s", state, input, address)
-
-	command, err := GetCommandAddress(messageType, address)
+	command, err := BuildStatusCommand(address, input, status, method)
 	if err != nil {
-		errorMessage := "Could not address command: " + err.Error()
-		log.Printf(errorMessage)
-		return []byte{}, errors.New(errorMessage)
+		msg := fmt.Sprintf("could not build subscribe command: %s", err.Error())
+		log.Printf("%s", color.HiRedString("[error] %s", msg))
+		return []byte{}, errors.New(msg)
+	}
+
+	command, err = MakeSubstitutions(command, ENCODE)
+	if err != nil {
+		msg := fmt.Sprintf("Could not substitute reserved bytes: %s", err.Error())
+		log.Printf("%s", color.HiRedString("[error] %s", msg))
+		return []byte{}, errors.New(msg)
+	}
+
+	command, err = Wrap(command)
+	if err != nil {
+		msg := fmt.Sprintf("Could not wrap message: %s", err.Error())
+		log.Printf("%s", color.HiRedString("[error] %s", msg))
+		return []byte{}, errors.New(msg)
+	}
+
+	return command, nil
+}
+
+func BuildStatusCommand(address, input, state string, method Method) ([]byte, error) {
+
+	log.Printf("Building subscription message for %s on input %s at address %s", state, input, address)
+
+	var base byte
+	switch method {
+	case Subscribe:
+		base = DI_SUBSCRIBESV
+	case Unsubscribe:
+		base = DI_UNSUBSCRIBESV
+	case SubscribePercent:
+		base = DI_SUBSCRIBESVPERCENT
+	case UnsubscribePercent:
+		base = DI_UNSUBSCRIBESVPERCENT
+	}
+
+	command, err := GetCommandAddress(base, address)
+	if err != nil {
+		msg := fmt.Sprintf("could not address command: %s", err.Error())
+		log.Printf("%s", color.HiRedString("[error] %s", msg))
+		return []byte{}, errors.New(msg)
 	}
 
 	gainBlock, err := hex.DecodeString(input)
 	if err != nil {
-		errorMessage := "Could not decode input string: " + err.Error()
-		log.Printf(errorMessage)
-		return []byte{}, errors.New(errorMessage)
+		msg := fmt.Sprintf("Could not decode input string: %s", err.Error())
+		log.Printf("%s", color.HiRedString("[error] %s", msg))
+		return []byte{}, errors.New(msg)
 	}
 
 	command = append(command, gainBlock...)
@@ -165,7 +189,13 @@ func BuildSubscribeCommand(address, input, state string, messageType byte) ([]by
 	command = append(command, stateVariables[state]...)
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
-	command = append(command, RATE...)
+	if method == Subscribe || method == SubscribePercent {
+		command = append(command, RATE...)
+	} else { // it's an unsubscribe command and the rate is zero. I hope this works
+		zero := make([]byte, len(RATE))
+		command = append(command, zero...)
+	}
+
 	log.Printf("Command string: %s", hex.EncodeToString(command))
 
 	checksum := GetChecksumByte(command)
@@ -179,7 +209,7 @@ func HandleStatusCommand(subscribe, unsubscribe []byte, address string) ([]byte,
 
 	log.Printf("[status] handling status command: %s...", color.HiBlueString("%x", subscribe))
 
-	connection, err := connection.GetConnection(address)
+	connection, err := connect.GetConnection(address)
 	if err != nil {
 		msg := fmt.Sprintf("problem getting connection to device: %s", err.Error())
 		log.Printf("%s", color.HiRedString("[error] %s", msg))
@@ -188,7 +218,7 @@ func HandleStatusCommand(subscribe, unsubscribe []byte, address string) ([]byte,
 
 	_, err = connection.Write(subscribe)
 	if neterr, ok := err.(net.Error); ok && neterr.Timeout() {
-		_, err := connect.HandleTimeout(&connection, subscribe, connect.Write)
+		_, err = connect.HandleTimeout(connection, subscribe, connect.Write)
 	}
 
 	if err != nil {
@@ -200,13 +230,13 @@ func HandleStatusCommand(subscribe, unsubscribe []byte, address string) ([]byte,
 	reader := bufio.NewReader(connection)
 	response, err := reader.ReadBytes(ETX)
 	if neterr, ok := err.(net.Error); ok && neterr.Timeout() {
-		response, err = HandleTimeout(connection, []byte{ETX}, connect.Read)
+		response, err = connect.HandleTimeout(connection, []byte{ETX}, connect.Read)
 	}
 
 	if err != nil {
-		msg := color.HiRedString("could not read status message to device: %s", err.Error())
-		log.Printf("[error] %s", errorMessage)
-		return []byte{}, errors.New(errorMessage)
+		msg := fmt.Sprintf("could not read status message to device: %s", err.Error())
+		log.Printf("%s", color.HiRedString("[error] %s", msg))
+		return []byte{}, errors.New(msg)
 	}
 
 	log.Printf("[status] response: %s", color.HiBlueString("%x", response))
@@ -271,5 +301,3 @@ func ParseMuteStatus(message []byte) (se.MuteStatus, error) {
 		return se.MuteStatus{}, errors.New("Bad data in status message")
 	}
 }
-
-func handleTimeout(conn *net.TCPConn, msg []byte, dir string)
