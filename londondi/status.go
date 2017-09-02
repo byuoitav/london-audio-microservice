@@ -33,9 +33,9 @@ func GetVolume(address, input string) (se.Volume, error) {
 
 	response, err := GetStatus(subscribe, unsubscribe, address+":"+PORT)
 	if err != nil {
-		errorMessage := "Could not execute commands: " + err.Error()
-		log.Printf(errorMessage)
-		return se.Volume{}, errors.New(errorMessage)
+		msg := fmt.Sprintf("Could not execute commands: %s", err.Error())
+		log.Printf("%s", color.HiRedString("[error] %s", msg))
+		return se.Volume{}, errors.New(msg)
 	}
 
 	response, err = Unwrap(response)

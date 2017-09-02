@@ -92,11 +92,18 @@ const (
 	UnsubscribePercent
 )
 
-var DI_SETSV = byte(0x88)
-var DI_SETSVPERCENT = byte(0x8d)
-var DI_SUBSCRIBESV = byte(0x89)
-var DI_SUBSCRIBESVPERCENT = byte(0x8e)
-var DI_UNSUBSCRIBESV = byte(0x8a)
-var DI_UNSUBSCRIBESVPERCENT = byte(0x8f)
+const (
+	DI_SETSV                = 0x88
+	DI_SETSVPERCENT         = 0x8d
+	DI_SUBSCRIBESV          = 0x89
+	DI_SUBSCRIBESVPERCENT   = 0x8e
+	DI_UNSUBSCRIBESV        = 0x8a
+	DI_UNSUBSCRIBESVPERCENT = 0x8f
+)
 
-const MONSTER = 0x88
+type State string
+
+const (
+	GAIN State = "gain"
+	MUTE State = "mute"
+)
