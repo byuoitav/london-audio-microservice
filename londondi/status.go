@@ -6,11 +6,13 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"log"
 	"net"
-	"time"
 
 	se "github.com/byuoitav/av-api/statusevaluators"
+	"github.com/byuoitav/london-audio-microservice/connect"
+	"github.com/fatih/color"
 )
 
 const TIMEOUT = 10
@@ -173,41 +175,55 @@ func BuildSubscribeCommand(address, input, state string, messageType byte) ([]by
 	return command, nil
 }
 
-func HandleStatusCommand(subscribe []byte, address string) ([]byte, error) {
+func HandleStatusCommand(subscribe, unsubscribe []byte, address string) ([]byte, error) {
 
-	log.Printf("Handling status command...")
+	log.Printf("[status] handling status command: %s...", color.HiBlueString("%x", subscribe))
 
-	connection, err := net.Dial("tcp", address)
+	connection, err := connection.GetConnection(address)
 	if err != nil {
-		errorMessage := "Could not connect to device: " + err.Error()
-		log.Printf(errorMessage)
-		return []byte{}, errors.New(errorMessage)
+		msg := fmt.Sprintf("problem getting connection to device: %s", err.Error())
+		log.Printf("%s", color.HiRedString("[error] %s", msg))
+		return []byte{}, errors.New(msg)
 	}
 
-	defer connection.Close()
-
-	connection.SetReadDeadline(time.Now().Add(TIMEOUT * time.Second))
-
 	_, err = connection.Write(subscribe)
+	if neterr, ok := err.(net.Error); ok && neterr.Timeout() {
+		_, err := connect.HandleTimeout(&connection, subscribe, connect.Write)
+	}
+
 	if err != nil {
-		errorMessage := "Could not send message to device: " + err.Error()
-		log.Printf(errorMessage)
-		return []byte{}, errors.New(errorMessage)
+		msg := fmt.Sprintf("could not send subscribe message to device: %s", err.Error())
+		log.Printf("%s", color.HiRedString("[error] %s", msg))
+		return []byte{}, errors.New(msg)
 	}
 
 	reader := bufio.NewReader(connection)
-
 	response, err := reader.ReadBytes(ETX)
+	if neterr, ok := err.(net.Error); ok && neterr.Timeout() {
+		response, err = HandleTimeout(connection, []byte{ETX}, connect.Read)
+	}
+
 	if err != nil {
-		errorMessage := "Could not find ETX: " + err.Error()
-		log.Printf(errorMessage)
+		msg := color.HiRedString("could not read status message to device: %s", err.Error())
+		log.Printf("[error] %s", errorMessage)
 		return []byte{}, errors.New(errorMessage)
 	}
 
-	log.Printf("Response: %x", response)
+	log.Printf("[status] response: %s", color.HiBlueString("%x", response))
+	log.Printf("[status] sending unsubscribe command: %s...", color.HiBlueString("%x", unsubscribe))
+
+	_, err = connection.Write(unsubscribe)
+	if neterr, ok := err.(net.Error); ok && neterr.Timeout() {
+		_, err = connect.HandleTimeout(connection, unsubscribe, connect.Write)
+	}
+
+	if err != nil {
+		msg := fmt.Sprintf("could not	not send unsubscribe message to device: %s", err.Error())
+		log.Printf("%s", color.HiRedString("[error] %s", msg))
+		return []byte{}, errors.New(msg)
+	}
 
 	return response, nil
-
 }
 
 //@pre: checksum byte removed
@@ -255,3 +271,5 @@ func ParseMuteStatus(message []byte) (se.MuteStatus, error) {
 		return se.MuteStatus{}, errors.New("Bad data in status message")
 	}
 }
+
+func handleTimeout(conn *net.TCPConn, msg []byte, dir string)
