@@ -84,7 +84,9 @@ var substitutions = map[int][]byte{
 type Method int
 
 const (
-	Subscribe Method = 1 + iota
+	Set Method = 1 + iota
+	SetPercent
+	Subscribe
 	Unsubscribe
 	SubscribePercent
 	UnsubscribePercent
@@ -96,3 +98,5 @@ var DI_SUBSCRIBESV = byte(0x89)
 var DI_SUBSCRIBESVPERCENT = byte(0x8e)
 var DI_UNSUBSCRIBESV = byte(0x8a)
 var DI_UNSUBSCRIBESVPERCENT = byte(0x8f)
+
+const MONSTER = 0x88
