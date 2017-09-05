@@ -5,15 +5,15 @@ import (
 	"errors"
 	"log"
 	"net"
-	"sync"
 	"time"
 
 	"github.com/fatih/color"
+	"golang.org/x/sync/syncmap"
 )
 
 const TIMEOUT = 15
 
-var CONNS = sync.Map{}
+var CONNS = syncmap.Map{}
 
 func GetConnection(address string) (*net.TCPConn, error) {
 
