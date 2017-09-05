@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"net"
 
 	se "github.com/byuoitav/av-api/statusevaluators"
 	"github.com/byuoitav/london-audio-microservice/connect"
@@ -74,14 +73,14 @@ func GetMute(address, input string) (se.MuteStatus, error) {
 
 	log.Printf("%s", color.HiMagentaString("[status] getting mute status of channel %X from device at address %s", input, address))
 
-	subscribe, err := BuildCommand(address, input, "volume", []byte{}, Subscribe)
+	subscribe, err := BuildCommand(address, input, "mute", []byte{}, Subscribe)
 	if err != nil {
 		msg := fmt.Sprintf("unable to build subscribe command %s", err.Error())
 		log.Printf("%s", color.HiRedString("[error] %s", msg))
 		return se.MuteStatus{}, errors.New(msg)
 	}
 
-	unsubscribe, err := BuildCommand(address, input, "volume", []byte{}, Unsubscribe)
+	unsubscribe, err := BuildCommand(address, input, "mute", []byte{}, Unsubscribe)
 	if err != nil {
 		msg := fmt.Sprintf("unable to build unsubscribe command %s", err.Error())
 		log.Printf("%s", color.HiRedString("[error] %s", msg))
@@ -229,10 +228,6 @@ func GetStatus(subscribe, unsubscribe []byte, address string) ([]byte, error) {
 	log.Printf("[status] writing status command...")
 
 	_, err = connection.Write(subscribe)
-	if neterr, ok := err.(net.Error); ok && neterr.Timeout() {
-		_, err = connect.HandleTimeout(connection, subscribe, connect.Write)
-	}
-
 	if err != nil {
 		msg := fmt.Sprintf("could not send subscribe message to device: %s", err.Error())
 		log.Printf("%s", color.HiRedString("[error] %s", msg))
@@ -242,9 +237,6 @@ func GetStatus(subscribe, unsubscribe []byte, address string) ([]byte, error) {
 	log.Printf("[status] reading status response...")
 	reader := bufio.NewReader(connection)
 	response, err := reader.ReadBytes(ETX)
-	if neterr, ok := err.(net.Error); ok && neterr.Timeout() {
-		response, err = connect.HandleTimeout(connection, []byte{ETX}, connect.Read)
-	}
 
 	if err != nil {
 		msg := fmt.Sprintf("device not responding: %s", err.Error())
@@ -256,10 +248,6 @@ func GetStatus(subscribe, unsubscribe []byte, address string) ([]byte, error) {
 	log.Printf("[status] sending unsubscribe command: %s...", color.HiBlueString("%x", unsubscribe))
 
 	_, err = connection.Write(unsubscribe)
-	if neterr, ok := err.(net.Error); ok && neterr.Timeout() {
-		_, err = connect.HandleTimeout(connection, unsubscribe, connect.Write)
-	}
-
 	if err != nil {
 		msg := fmt.Sprintf("could not	not send unsubscribe message to device: %s", err.Error())
 		log.Printf("%s", color.HiRedString("[error] %s", msg))

@@ -43,6 +43,7 @@ func GetConnection(address string) (*net.TCPConn, error) {
 	}
 
 	output, _ := conn.(net.TCPConn)
+	output.SetDeadline(time.Now().Add(TIMEOUT * time.Second))
 	return &output, nil
 }
 
