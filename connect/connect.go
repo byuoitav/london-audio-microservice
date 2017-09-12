@@ -3,17 +3,26 @@ package connect
 import (
 	"bufio"
 	"errors"
+	"fmt"
 	"log"
 	"net"
+	"syscall"
 	"time"
 
 	"github.com/fatih/color"
 	"golang.org/x/sync/syncmap"
 )
 
-const TIMEOUT = 15
+const TIMEOUT = 5
 
 var CONNS = syncmap.Map{}
+
+type ReadWrite int
+
+const (
+	Read ReadWrite = 1 + iota
+	Write
+)
 
 func GetConnection(address string) (*net.TCPConn, error) {
 
@@ -22,28 +31,30 @@ func GetConnection(address string) (*net.TCPConn, error) {
 	//first see if the entry is in the map
 	conn, ok := CONNS.Load(address)
 	if !ok {
-
-		log.Printf("[connection] connection to %s not found, connecting...", address)
-
-		addr, err := net.ResolveTCPAddr("tcp", address)
+		err := addConnection(address)
 		if err != nil {
 			return nil, err
 		}
-
-		conn, err := net.DialTCP("tcp", nil, addr)
-		if err != nil {
-			return nil, err
-		}
-
-		conn.SetDeadline(time.Now().Add(TIMEOUT * time.Second))
-
-		CONNS.LoadOrStore(address, *conn)
-
-		return conn, nil
 	}
 
+	//cast to TCP connection and refresh
 	output, _ := conn.(net.TCPConn)
 	output.SetDeadline(time.Now().Add(TIMEOUT * time.Second))
+
+	//check for broken pipe error (DSP reboot while microservice is still running)
+	_, err := output.Write([]byte{0x00})
+	if err != nil && err == syscall.EPIPE {
+		output.Close()
+		CONNS.Delete(address)
+		err = addConnection(address)
+		if err != nil {
+			return nil, err
+		}
+
+		conn, _ = CONNS.Load(address)
+		output, _ = conn.(net.TCPConn)
+	}
+
 	return &output, nil
 }
 
@@ -75,9 +86,47 @@ func HandleTimeout(conn *net.TCPConn, msg []byte, method ReadWrite) ([]byte, err
 
 }
 
-type ReadWrite int
+func addConnection(address string) error {
 
-const (
-	Read ReadWrite = 1 + iota
-	Write
-)
+	log.Printf("[connection] adding connection to %s...", address)
+
+	addr, err := net.ResolveTCPAddr("tcp", address)
+	if err != nil {
+		return err
+	}
+
+	conn, err := net.DialTCP("tcp", nil, addr)
+	if err != nil {
+		return err
+	}
+
+	conn.SetDeadline(time.Now().Add(TIMEOUT * time.Second))
+
+	CONNS.LoadOrStore(address, *conn)
+
+	return nil
+}
+
+func HandleBrokenPipe(address string) error {
+
+	msg := fmt.Sprintf("[connection] handling broken pipe error with address %s...", address)
+	log.Printf("%s", color.HiRedString("%s", msg))
+
+	if conn, ok := CONNS.Load(address); !ok {
+
+		msg := fmt.Sprintf("[connection] connection to %s not found. Adding to connection store...")
+		log.Printf("%s", color.HiRedString("%s", msg))
+
+		err := addConnection(address)
+		if err != nil {
+			msg = fmt.Sprintf("[connection] unable to add connection: %s", err.Error())
+			log.Printf("%s", color.HiRedString("%s", msg))
+			return errors.New(msg)
+		}
+
+	}
+
+	conn.Close()
+
+	return nil
+}

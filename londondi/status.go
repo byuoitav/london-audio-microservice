@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"syscall"
 
 	se "github.com/byuoitav/av-api/statusevaluators"
 	"github.com/byuoitav/london-audio-microservice/connect"
@@ -229,6 +230,12 @@ func GetStatus(subscribe, unsubscribe []byte, address string) ([]byte, error) {
 
 	_, err = connection.Write(subscribe)
 	if err != nil {
+
+		if err == syscall.EPIPE {
+
+			connection.Close()
+		}
+
 		msg := fmt.Sprintf("could not send subscribe message to device: %s", err.Error())
 		log.Printf("%s", color.HiRedString("[error] %s", msg))
 		return []byte{}, errors.New(msg)
