@@ -3,7 +3,6 @@ package connect
 import (
 	"bufio"
 	"errors"
-	"fmt"
 	"log"
 	"net"
 	"syscall"
@@ -107,26 +106,27 @@ func addConnection(address string) error {
 	return nil
 }
 
-func HandleBrokenPipe(address string) error {
-
-	msg := fmt.Sprintf("[connection] handling broken pipe error with address %s...", address)
-	log.Printf("%s", color.HiRedString("%s", msg))
-
-	if conn, ok := CONNS.Load(address); !ok {
-
-		msg := fmt.Sprintf("[connection] connection to %s not found. Adding to connection store...")
-		log.Printf("%s", color.HiRedString("%s", msg))
-
-		err := addConnection(address)
-		if err != nil {
-			msg = fmt.Sprintf("[connection] unable to add connection: %s", err.Error())
-			log.Printf("%s", color.HiRedString("%s", msg))
-			return errors.New(msg)
-		}
-
-	}
-
-	conn.Close()
-
-	return nil
-}
+//func HandleBrokenPipe(address string) error {
+//
+//	msg := fmt.Sprintf("[connection] handling broken pipe error with address %s...", address)
+//	log.Printf("%s", color.HiRedString("%s", msg))
+//
+//	conn, ok := CONNS.Load(address)
+//	if !ok {
+//
+//		msg := fmt.Sprintf("[connection] connection to %s not found. Adding to connection store...")
+//		log.Printf("%s", color.HiRedString("%s", msg))
+//
+//		err := addConnection(address)
+//		if err != nil {
+//			msg = fmt.Sprintf("[connection] unable to add connection: %s", err.Error())
+//			log.Printf("%s", color.HiRedString("%s", msg))
+//			return errors.New(msg)
+//		}
+//
+//	}
+//
+//	conn.Close()
+//
+//	return nil
+//}
