@@ -53,12 +53,6 @@ func HandleRawCommandBytes(command []byte, address string) error {
 
 	_, err = connection.Write(command)
 	if err != nil {
-		if neterr, ok := err.(net.Error); ok && neterr.Timeout() {
-			_, err = connect.HandleTimeout(connection, command, connect.Write)
-		}
-	}
-
-	if err != nil {
 		msg := fmt.Sprintf("unable to write to connection: %s", err.Error())
 		log.Printf("%s", color.HiRedString("[error] %s", msg))
 		return errors.New(msg)

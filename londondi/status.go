@@ -229,6 +229,8 @@ func GetStatus(subscribe, unsubscribe []byte, address string) ([]byte, error) {
 
 	_, err = connection.Write(subscribe)
 	if err != nil {
+
+		connect.HandleStaleConnection(connection)
 		msg := fmt.Sprintf("could not send subscribe message to device: %s", err.Error())
 		log.Printf("%s", color.HiRedString("[error] %s", msg))
 		return []byte{}, errors.New(msg)
@@ -237,7 +239,6 @@ func GetStatus(subscribe, unsubscribe []byte, address string) ([]byte, error) {
 	log.Printf("[status] reading status response...")
 	reader := bufio.NewReader(connection)
 	response, err := reader.ReadBytes(ETX)
-
 	if err != nil {
 		msg := fmt.Sprintf("device not responding: %s", err.Error())
 		log.Printf("%s", color.HiRedString("[error] %s", msg))
@@ -249,7 +250,9 @@ func GetStatus(subscribe, unsubscribe []byte, address string) ([]byte, error) {
 
 	_, err = connection.Write(unsubscribe)
 	if err != nil {
-		msg := fmt.Sprintf("could not	not send unsubscribe message to device: %s", err.Error())
+		//handle stale connection -- remove from map
+		connect.HandleStaleConnection(connection)
+		msg := fmt.Sprintf("could not send unsubscribe message to device: %s", err.Error())
 		log.Printf("%s", color.HiRedString("[error] %s", msg))
 		return []byte{}, errors.New(msg)
 	}
