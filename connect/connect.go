@@ -1,8 +1,8 @@
 package connect
 
 import (
-	"bufio"
 	"errors"
+	"fmt"
 	"log"
 	"net"
 	"time"
@@ -11,9 +11,16 @@ import (
 	"golang.org/x/sync/syncmap"
 )
 
-const TIMEOUT = 15
+const TIMEOUT = 5
 
 var CONNS = syncmap.Map{}
+
+type ReadWrite int
+
+const (
+	Read ReadWrite = 1 + iota
+	Write
+)
 
 func GetConnection(address string) (*net.TCPConn, error) {
 
@@ -22,62 +29,92 @@ func GetConnection(address string) (*net.TCPConn, error) {
 	//first see if the entry is in the map
 	conn, ok := CONNS.Load(address)
 	if !ok {
-
-		log.Printf("[connection] connection to %s not found, connecting...", address)
-
-		addr, err := net.ResolveTCPAddr("tcp", address)
+		err := addConnection(address)
 		if err != nil {
 			return nil, err
 		}
 
-		conn, err := net.DialTCP("tcp", nil, addr)
-		if err != nil {
-			return nil, err
+		conn, ok = CONNS.Load(address)
+		if !ok {
+			msg := "unable to add address to map"
+			log.Printf("%s", color.HiRedString("[connection] %s", msg))
+			return nil, errors.New(msg)
 		}
-
-		conn.SetDeadline(time.Now().Add(TIMEOUT * time.Second))
-
-		CONNS.LoadOrStore(address, *conn)
-
-		return conn, nil
 	}
 
+	//cast to TCP connection and refresh
 	output, _ := conn.(net.TCPConn)
 	output.SetDeadline(time.Now().Add(TIMEOUT * time.Second))
+
+	//check for broken pipe error (DSP reboot while microservice is still running)
+	//check in old event-router commit
+	_, err := output.Write([]byte{0x00})
+	if err != nil {
+
+		log.Printf("%s", color.HiRedString("[connection] unable to write to connection: %s refreshing...", err.Error()))
+		err = HandleStaleConnection(&output)
+		if err != nil {
+			msg := fmt.Sprintf("unable to refresh connection: %s", err.Error())
+			log.Printf("%s", color.HiRedString("[connection] %s", msg))
+			return nil, errors.New(msg)
+		}
+
+		err = addConnection(address)
+		if err != nil {
+			return nil, err
+		}
+
+		conn, _ = CONNS.Load(address)
+		output, _ = conn.(net.TCPConn)
+	}
+
 	return &output, nil
 }
 
-//@param conn - the connection in question
-//@param msg - the message to be read or written
-//@param act - connect.Read or connect.Write
-//refreshes the connection by extending the deadline, then re-writes msg to the
-//connection or re-reads until the first byte of msg is found
-//@pre conn has connected successfully prior to this function call -- otherwise it will trigger a panic!
-func HandleTimeout(conn *net.TCPConn, msg []byte, method ReadWrite) ([]byte, error) {
+func HandleStaleConnection(conn *net.TCPConn) error {
 
-	//these three happen in any case
-	log.Printf("%s", color.HiRedString("[connection] connection timed out, retrying..."))
+	if conn == nil {
+		msg := "null connection"
+		log.Printf("%s", color.HiRedString("[connection] %s", msg))
+		return errors.New(msg)
+	}
 
-	if len(msg) == 0 {
-		return []byte{}, errors.New("cannot write empty message to TCP connection")
+	if conn.RemoteAddr() == nil {
+		msg := "no remote address"
+		log.Printf("%s", color.HiRedString("[connection] %s", msg))
+		return errors.New(msg)
+	}
+
+	address := conn.RemoteAddr().String()
+	log.Printf("[connection] handling stale connection: %s", address)
+
+	//close connection
+	conn.Close()
+
+	//remove connection from map
+	//it will get added to the map on the next call to GetConnection
+	CONNS.Delete(address)
+
+	return nil
+}
+
+func addConnection(address string) error {
+
+	log.Printf("[connection] adding connection to %s...", address)
+
+	addr, err := net.ResolveTCPAddr("tcp", address)
+	if err != nil {
+		return err
+	}
+
+	conn, err := net.DialTCP("tcp", nil, addr)
+	if err != nil {
+		return err
 	}
 
 	conn.SetDeadline(time.Now().Add(TIMEOUT * time.Second))
 
-	if method == Write {
+	CONNS.LoadOrStore(address, *conn)
 
-		_, err := conn.Write(msg)
-		return msg, err
-	}
-
-	reader := bufio.NewReader(conn)
-	return reader.ReadBytes(msg[0])
-
+	return nil
 }
-
-type ReadWrite int
-
-const (
-	Read ReadWrite = 1 + iota
-	Write
-)
