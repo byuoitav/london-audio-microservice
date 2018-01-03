@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"log"
 	"net"
+
+	"github.com/byuoitav/london-audio-microservice/connect"
+	"github.com/fatih/color"
 )
 
 func HandleRawCommandString(rawCommand RawDICommand) error {
@@ -39,24 +42,22 @@ func HandleRawCommandString(rawCommand RawDICommand) error {
 
 func HandleRawCommandBytes(command []byte, address string) error {
 
-	log.Printf("Handling raw command: %x...", command)
+	log.Printf("%s", color.HiCyanString("Handling raw command %x with address %s...", command, address))
 
-	log.Printf("Connecting to device...")
-	connection, err := net.Dial("tcp", address)
+	connection, err := connect.GetConnection(address)
 	if err != nil {
-		errorMessage := "Could not connect to device: " + err.Error()
-		log.Printf(errorMessage)
-		return errors.New(errorMessage)
+		msg := fmt.Sprintf("unable to connect to device %s", err.Error())
+		log.Printf("%s", color.HiRedString("[error] %s", msg))
+		return errors.New(msg)
 	}
 
-	log.Printf("Sending command to device...")
 	_, err = connection.Write(command)
 	if err != nil {
-		errorMessage := "Could not write to device: " + err.Error()
-		log.Printf(errorMessage)
-		return errors.New(errorMessage)
+		msg := fmt.Sprintf("unable to write to connection: %s", err.Error())
+		log.Printf("%s", color.HiRedString("[error] %s", msg))
+		return errors.New(msg)
 	}
 
-	connection.Close()
+	log.Printf("%s", color.HiGreenString("[command] successfully sent command"))
 	return nil
 }
