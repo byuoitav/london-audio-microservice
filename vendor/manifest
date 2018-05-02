@@ -52,6 +52,14 @@
 			"notests": true
 		},
 		{
+			"importpath": "github.com/byuoitav/authmiddleware",
+			"repository": "https://github.com/byuoitav/authmiddleware",
+			"vcs": "git",
+			"revision": "6a31d6f79fa87b55f4b4145ab569e2c81a5996ee",
+			"branch": "stage",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/daaku/go.zipexe",
 			"repository": "https://github.com/daaku/go.zipexe",
 			"vcs": "git",

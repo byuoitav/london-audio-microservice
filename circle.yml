@@ -4,7 +4,7 @@ jobs:
         docker:
             - image: byuoitav/build-env:master
 
-        working_directory: /go/src/github.com/byuoitav/$CIRCLE_PROJECT_REPONAME
+        working_directory: /go/src/github.com/byuoitav/london-audio-microservice
 
         steps:
             - checkout
