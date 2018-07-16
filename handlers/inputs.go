@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
-	se "github.com/byuoitav/av-api/statusevaluators"
+	"github.com/byuoitav/common/status"
 	"github.com/byuoitav/london-audio-microservice/londondi"
 	"github.com/labstack/echo"
 )
@@ -36,7 +36,7 @@ func Mute(context echo.Context) error {
 		return context.JSON(http.StatusInternalServerError, err.Error())
 	}
 
-	return context.JSON(http.StatusOK, se.MuteStatus{true})
+	return context.JSON(http.StatusOK, status.Mute{true})
 }
 
 func UnMute(context echo.Context) error {
@@ -64,7 +64,7 @@ func UnMute(context echo.Context) error {
 		return context.JSON(http.StatusInternalServerError, err.Error())
 	}
 
-	return context.JSON(http.StatusOK, se.MuteStatus{false})
+	return context.JSON(http.StatusOK, status.Mute{false})
 }
 
 func SetVolume(context echo.Context) error {
@@ -98,5 +98,5 @@ func SetVolume(context echo.Context) error {
 		return context.JSON(http.StatusInternalServerError, err.Error())
 	}
 
-	return context.JSON(http.StatusOK, se.Volume{volumeInt})
+	return context.JSON(http.StatusOK, status.Volume{volumeInt})
 }
