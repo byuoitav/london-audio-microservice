@@ -9,67 +9,67 @@ import (
 	"fmt"
 	"log"
 
-	se "github.com/byuoitav/av-api/statusevaluators"
+	"github.com/byuoitav/common/status"
 	"github.com/byuoitav/london-audio-microservice/connect"
 	"github.com/fatih/color"
 )
 
-func GetVolume(address, input string) (se.Volume, error) {
+func GetVolume(address, input string) (status.Volume, error) {
 
 	subscribe, err := BuildCommand(address, input, "volume", []byte{}, SubscribePercent)
 	if err != nil {
 		msg := fmt.Sprintf("unable to build subscribe command %s", err.Error())
 		log.Printf("%s", color.HiRedString("[error] %s", msg))
-		return se.Volume{}, errors.New(msg)
+		return status.Volume{}, errors.New(msg)
 	}
 
 	unsubscribe, err := BuildCommand(address, input, "volume", []byte{}, UnsubscribePercent)
 	if err != nil {
 		msg := fmt.Sprintf("unable to build unsubscribe command %s", err.Error())
 		log.Printf("%s", color.HiRedString("[error] %s", msg))
-		return se.Volume{}, errors.New(msg)
+		return status.Volume{}, errors.New(msg)
 	}
 
 	response, err := GetStatus(subscribe, unsubscribe, address+":"+PORT)
 	if err != nil {
 		msg := fmt.Sprintf("Could not execute commands: %s", err.Error())
 		log.Printf("%s", color.HiRedString("[error] %s", msg))
-		return se.Volume{}, errors.New(msg)
+		return status.Volume{}, errors.New(msg)
 	}
 
 	response, err = Unwrap(response)
 	if err != nil {
 		errorMessage := "Could not unwrap message: " + err.Error()
 		log.Printf(errorMessage)
-		return se.Volume{}, errors.New(errorMessage)
+		return status.Volume{}, errors.New(errorMessage)
 	}
 
 	response, err = MakeSubstitutions(response, DECODE)
 	if err != nil {
 		errorMessage := "Could not substitute reserved bytes: " + err.Error()
 		log.Printf(errorMessage)
-		return se.Volume{}, errors.New(errorMessage)
+		return status.Volume{}, errors.New(errorMessage)
 	}
 
 	response, err = Validate(response)
 	if err != nil {
 		errorMessage := "Invalid message: " + err.Error()
 		log.Printf(errorMessage)
-		return se.Volume{}, errors.New(errorMessage)
+		return status.Volume{}, errors.New(errorMessage)
 	}
 
 	state, err := ParseVolumeStatus(response)
 	if err != nil {
 		errorMessage := "Could not parse response: " + err.Error()
 		log.Printf(errorMessage)
-		return se.Volume{}, errors.New(errorMessage)
+		return status.Volume{}, errors.New(errorMessage)
 	}
 
 	return state, nil
 
 }
 
-func GetMute(address, input string) (se.MuteStatus, error) {
+func GetMute(address, input string) (status.Mute, error) {
 
 	log.Printf("%s", color.HiMagentaString("[status] getting mute status of channel %X from device at address %s", input, address))
 
@@ -77,49 +77,49 @@ func GetMute(address, input string) (se.MuteStatus, error) {
 	if err != nil {
 		msg := fmt.Sprintf("unable to build subscribe command %s", err.Error())
 		log.Printf("%s", color.HiRedString("[error] %s", msg))
-		return se.MuteStatus{}, errors.New(msg)
+		return status.Mute{}, errors.New(msg)
 	}
 
 	unsubscribe, err := BuildCommand(address, input, "mute", []byte{}, Unsubscribe)
 	if err != nil {
 		msg := fmt.Sprintf("unable to build unsubscribe command %s", err.Error())
 		log.Printf("%s", color.HiRedString("[error] %s", msg))
-		return se.MuteStatus{}, errors.New(msg)
+		return status.Mute{}, errors.New(msg)
 	}
 
 	response, err := GetStatus(subscribe, unsubscribe, address+":"+PORT)
 	if err != nil {
 		errorMessage := "could not execute commands: " + err.Error()
 		log.Printf(errorMessage)
-		return se.MuteStatus{}, errors.New(errorMessage)
+		return status.Mute{}, errors.New(errorMessage)
 	}
 
 	response, err = Unwrap(response)
 	if err != nil {
 		errorMessage := "Could not unwrap message: " + err.Error()
 		log.Printf(errorMessage)
-		return se.MuteStatus{}, errors.New(errorMessage)
+		return status.Mute{}, errors.New(errorMessage)
 	}
 
 	response, err = MakeSubstitutions(response, DECODE)
 	if err != nil {
 		errorMessage := "Could not substitute reserved bytes: " + err.Error()
 		log.Printf(errorMessage)
-		return se.MuteStatus{}, errors.New(errorMessage)
+		return status.Mute{}, errors.New(errorMessage)
 	}
 
 	response, err = Validate(response)
 	if err != nil {
 		errorMessage := "Invalid message: " + err.Error()
 		log.Printf(errorMessage)
-		return se.MuteStatus{}, errors.New(errorMessage)
+		return status.Mute{}, errors.New(errorMessage)
 	}
 
 	state, err := ParseMuteStatus(response)
 	if err != nil {
 		errorMessage := "Could not parse response: " + err.Error()
 		log.Printf(errorMessage)
-		return se.MuteStatus{}, errors.New(errorMessage)
+		return status.Mute{}, errors.New(errorMessage)
 	}
 
 	log.Printf("%s", color.HiMagentaString("[status] successfully retrieved status"))
@@ -261,7 +261,7 @@ func GetStatus(subscribe, unsubscribe []byte, address string) ([]byte, error) {
 }
 
 //@pre: checksum byte removed
-func ParseVolumeStatus(message []byte) (se.Volume, error) {
+func ParseVolumeStatus(message []byte) (status.Volume, error) {
 
 	log.Printf("Parsing mute status message: %X", message)
 
@@ -280,13 +280,13 @@ func ParseVolumeStatus(message []byte) (se.Volume, error) {
 
 	trueValue++ //not sure why it comes up with the wrong number
 
-	return se.Volume{
+	return status.Volume{
 		Volume: int(trueValue),
 	}, nil
 }
 
 //@pre: checksum byte removed
-func ParseMuteStatus(message []byte) (se.MuteStatus, error) {
+func ParseMuteStatus(message []byte) (status.Mute, error) {
 
 	log.Printf("Parsing mute status message: %X", message)
 
@@ -294,14 +294,14 @@ func ParseMuteStatus(message []byte) (se.MuteStatus, error) {
 	data := message[len(message)-1:]
 	log.Printf("data: %X", data)
 	if bytes.EqualFold(data, []byte{0}) {
-		return se.MuteStatus{
+		return status.Mute{
 			Muted: false,
 		}, nil
 	} else if bytes.EqualFold(data, []byte{1}) {
-		return se.MuteStatus{
+		return status.Mute{
 			Muted: true,
 		}, nil
 	} else { //bad data
-		return se.MuteStatus{}, errors.New("Bad data in status message")
+		return status.Mute{}, errors.New("Bad data in status message")
 	}
 }
