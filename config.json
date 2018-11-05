@@ -1,0 +1,8 @@
+{
+    "name": "london-audio-microservice",
+    "port": ":8009",
+    "env-vars": [
+        "BYPASS_AUTH",
+        "ROOM_SYSTEM"
+    ]
+}
