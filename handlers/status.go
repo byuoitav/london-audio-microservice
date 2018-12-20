@@ -9,7 +9,6 @@ import (
 )
 
 func GetMute(context echo.Context) error {
-
 	status, err := di.GetMute(context.Param("address"), context.Param("input"))
 	if err != nil {
 		msg := fmt.Sprintf("Error: %s", err.Error())
@@ -21,7 +20,6 @@ func GetMute(context echo.Context) error {
 }
 
 func GetVolume(context echo.Context) error {
-
 	status, err := di.GetVolume(context.Param("address"), context.Param("input"))
 	if err != nil {
 		msg := fmt.Sprintf("Error: %s", err.Error())
