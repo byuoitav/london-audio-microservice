@@ -12,7 +12,6 @@ import (
 const PORT = "1023"
 
 func Mute(context echo.Context) error {
-
 	input := context.Param("input")
 	address := context.Param("address")
 
@@ -40,7 +39,6 @@ func Mute(context echo.Context) error {
 }
 
 func UnMute(context echo.Context) error {
-
 	input := context.Param("input")
 	address := context.Param("address")
 
@@ -68,7 +66,6 @@ func UnMute(context echo.Context) error {
 }
 
 func SetVolume(context echo.Context) error {
-
 	input := context.Param("input")
 	address := context.Param("address")
 	volume := context.Param("level")
