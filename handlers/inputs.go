@@ -2,35 +2,18 @@ package handlers
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/byuoitav/common/status"
 	"github.com/byuoitav/london-audio-microservice/londondi"
 	"github.com/labstack/echo"
 )
 
-const PORT = "1023"
-
+//Mute handler
 func Mute(context echo.Context) error {
 	input := context.Param("input")
 	address := context.Param("address")
 
-	command, err := londondi.BuildRawMuteCommand(input, address, "true")
-	if err != nil {
-		return context.JSON(http.StatusBadRequest, err.Error())
-	}
-
-	command, err = londondi.MakeSubstitutions(command, londondi.ENCODE)
-	if err != nil {
-		return context.JSON(http.StatusInternalServerError, err.Error())
-	}
-
-	command, err = londondi.Wrap(command)
-	if err != nil {
-		return context.JSON(http.StatusInternalServerError, err.Error())
-	}
-
-	err = londondi.HandleRawCommandBytes(command, address+":"+PORT)
+	err = londondi.Mute(input, address)
 	if err != nil {
 		return context.JSON(http.StatusInternalServerError, err.Error())
 	}
@@ -38,26 +21,12 @@ func Mute(context echo.Context) error {
 	return context.JSON(http.StatusOK, status.Mute{true})
 }
 
+//UnMute handler
 func UnMute(context echo.Context) error {
 	input := context.Param("input")
 	address := context.Param("address")
 
-	command, err := londondi.BuildRawMuteCommand(input, address, "false")
-	if err != nil {
-		return context.JSON(http.StatusBadRequest, err.Error())
-	}
-
-	command, err = londondi.MakeSubstitutions(command, londondi.ENCODE)
-	if err != nil {
-		return context.JSON(http.StatusInternalServerError, err.Error())
-	}
-
-	command, err = londondi.Wrap(command)
-	if err != nil {
-		return context.JSON(http.StatusInternalServerError, err.Error())
-	}
-
-	err = londondi.HandleRawCommandBytes(command, address+":"+PORT)
+	err = londondi.UnMute(input.address)
 	if err != nil {
 		return context.JSON(http.StatusInternalServerError, err.Error())
 	}
@@ -65,32 +34,13 @@ func UnMute(context echo.Context) error {
 	return context.JSON(http.StatusOK, status.Mute{false})
 }
 
+//SetVolume handler
 func SetVolume(context echo.Context) error {
 	input := context.Param("input")
 	address := context.Param("address")
 	volume := context.Param("level")
 
-	volumeInt, err := strconv.Atoi(volume)
-	if err != nil {
-		return context.JSON(http.StatusBadRequest, err.Error())
-	}
-
-	command, err := londondi.BuildRawVolumeCommand(input, address, volume)
-	if err != nil {
-		return context.JSON(http.StatusBadRequest, err.Error())
-	}
-
-	command, err = londondi.MakeSubstitutions(command, londondi.ENCODE)
-	if err != nil {
-		return context.JSON(http.StatusInternalServerError, err.Error())
-	}
-
-	command, err = londondi.Wrap(command)
-	if err != nil {
-		return context.JSON(http.StatusInternalServerError, err.Error())
-	}
-
-	err = londondi.HandleRawCommandBytes(command, address+":"+PORT)
+	err := londondi.SetVolume(input, address, volume)
 	if err != nil {
 		return context.JSON(http.StatusInternalServerError, err.Error())
 	}
