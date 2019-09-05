@@ -12,6 +12,7 @@ import (
 
 //TIMEOUT .
 const TIMEOUT = 5
+const PORT = "1023"
 
 var pool = pooled.NewMap(45*time.Second, 400*time.Millisecond, getConnection)
 
@@ -32,7 +33,7 @@ func getConnection(key interface{}) (pooled.Conn, error) {
 	}
 	log.Printf("%s", color.HiCyanString("[connection] getting connection to address on device %s", address))
 
-	conn, err := net.DialTimeout("tcp", address, 10*time.Second)
+	conn, err := net.DialTimeout("tcp", address+":"+PORT, 10*time.Second)
 	if err != nil {
 		return nil, err
 	}

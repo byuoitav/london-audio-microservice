@@ -2,20 +2,15 @@ package londondi
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/byuoitav/common/pooled"
 )
 
 //PORT .
-const PORT = "1023"
+//const PORT = "1023"
 
 //SetVolume gets an volume level (int) and sets it on device
 func SetVolume(input string, address string, volume string) error {
-	_, err := strconv.Atoi(volume)
-	if err != nil {
-		return err
-	}
 
 	command, err := BuildRawVolumeCommand(input, address, volume)
 	if err != nil {

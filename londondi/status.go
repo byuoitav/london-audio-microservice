@@ -32,7 +32,7 @@ func GetVolume(address, input string) (status.Volume, error) {
 	}
 	var response []byte
 	work := func(conn pooled.Conn) error {
-		response, err = GetStatus(subscribe, unsubscribe, address+":"+PORT, conn)
+		response, err = GetStatus(subscribe, unsubscribe, address, conn)
 		if err != nil {
 			msg := fmt.Sprintf("Could not execute commands: %s", err.Error())
 			log.Printf("%s", color.HiRedString("[error] %s", msg))
@@ -98,7 +98,7 @@ func GetMute(address, input string) (status.Mute, error) {
 	}
 	var response []byte
 	work := func(conn pooled.Conn) error {
-		response, err = GetStatus(subscribe, unsubscribe, address+":"+PORT, conn)
+		response, err = GetStatus(subscribe, unsubscribe, address, conn)
 		if err != nil {
 			errorMessage := "could not execute commands: " + err.Error()
 			log.Printf(errorMessage)

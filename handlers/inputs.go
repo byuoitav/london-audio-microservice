@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/byuoitav/common/status"
 	"github.com/byuoitav/london-audio-microservice/londondi"
@@ -13,7 +14,7 @@ func Mute(context echo.Context) error {
 	input := context.Param("input")
 	address := context.Param("address")
 
-	err = londondi.Mute(input, address)
+	err := londondi.Mute(input, address)
 	if err != nil {
 		return context.JSON(http.StatusInternalServerError, err.Error())
 	}
@@ -26,7 +27,7 @@ func UnMute(context echo.Context) error {
 	input := context.Param("input")
 	address := context.Param("address")
 
-	err = londondi.UnMute(input.address)
+	err := londondi.UnMute(input, address)
 	if err != nil {
 		return context.JSON(http.StatusInternalServerError, err.Error())
 	}
@@ -39,8 +40,12 @@ func SetVolume(context echo.Context) error {
 	input := context.Param("input")
 	address := context.Param("address")
 	volume := context.Param("level")
+	volumeInt, err := strconv.Atoi(volume)
+	if err != nil {
+		return context.JSON(http.StatusInternalServerError, err.Error())
+	}
 
-	err := londondi.SetVolume(input, address, volume)
+	err = londondi.SetVolume(input, address, volume)
 	if err != nil {
 		return context.JSON(http.StatusInternalServerError, err.Error())
 	}
