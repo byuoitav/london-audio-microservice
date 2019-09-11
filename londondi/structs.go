@@ -43,7 +43,8 @@ var test = map[bool][]byte{
 
 //VIRTUAL_DEVICE byte should be the same for all cases!
 var VIRTUAL_DEVICE = byte(0x03)
-var PORT = "1023"
+
+// var PORT = "1023"
 
 var RATE = []byte{0x00, 0x00, 0x00, 0x32} //represents 50 ms, the shortest interval
 
