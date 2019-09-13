@@ -3,6 +3,9 @@
     "port": ":8009",
     "env-vars": [
         "BYPASS_AUTH",
-        "ROOM_SYSTEM"
+        "ENDPOINT_ACCESS_KEY",
+        "ENDPOINT_AUTHORIZATION_URL",
+        "ENDPOINT_USERNAME",
+        "SYSTEM_ID"
     ]
 }
