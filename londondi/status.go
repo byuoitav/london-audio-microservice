@@ -1,13 +1,13 @@
 package londondi
 
 import (
-	"bufio"
 	"bytes"
 	"encoding/binary"
 	"encoding/hex"
 	"errors"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/byuoitav/common/pooled"
 	"github.com/byuoitav/common/status"
@@ -247,9 +247,8 @@ func GetStatus(subscribe, unsubscribe []byte, address string, pconn pooled.Conn)
 		return nil, fmt.Errorf("unable to subscribe: %s", err)
 	}
 
+	response, err := pconn.ReadUntil(ETX, 3*time.Second)
 	log.Printf("[status] reading status response...")
-	reader := bufio.NewReader(pconn)
-	response, err := reader.ReadBytes(ETX)
 	if err != nil {
 		msg := fmt.Sprintf("device not responding: %s", err.Error())
 		log.Printf("%s", color.HiRedString("[error] %s", msg))
